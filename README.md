@@ -208,7 +208,7 @@ Call `resolveTheme` if you need the concrete palette outside the component.
 
 ## Handling incomplete markdown
 
-Streaming text often arrives with half-typed emphasis or unfinished links. Before parsing we run the content through a small sanitizer that auto-closes common Markdown markers and neutralises broken URLs. The implementation is adapted from [Vercel's streamdown `parse-incomplete-markdown`](https://github.com/vercel/streamdown/blob/main/packages/streamdown/lib/parse-incomplete-markdown.ts) (MIT licensed).
+Streaming text often arrives with half-typed emphasis or unfinished links. Before parsing we run the content through a small sanitizer that auto-closes common Markdown markers and neutralises broken URLs. The implementation is adapted from [Vercel's streamdown `parse-incomplete-markdown`](https://github.com/vercel/streamdown/blob/main/packages/streamdown/lib/parse-incomplete-markdown.ts) (Apache-2.0).
 
 ## Using `useMarkdownStream` directly
 
