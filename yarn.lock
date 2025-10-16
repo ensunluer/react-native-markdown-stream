@@ -6954,6 +6954,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-linear-gradient@npm:~13.0.2":
+  version: 13.0.2
+  resolution: "expo-linear-gradient@npm:13.0.2"
+  peerDependencies:
+    expo: "*"
+  checksum: 525e0ccdb75d1876d2d0faece669e952a0d5addb543f46705dd73b6d82a2f866847b752c12488acfc62c95877530d69e526eeab317afc0ce8f7042eadf01ccab
+  languageName: node
+  linkType: hard
+
 "expo-modules-autolinking@npm:3.0.15":
   version: 3.0.15
   resolution: "expo-modules-autolinking@npm:3.0.15"
@@ -12229,6 +12238,7 @@ __metadata:
   dependencies:
     "@expo/metro-runtime": ~6.1.2
     expo: ~54.0.13
+    expo-linear-gradient: ~13.0.2
     expo-status-bar: ~3.0.8
     react: 19.1.0
     react-dom: 19.1.0
