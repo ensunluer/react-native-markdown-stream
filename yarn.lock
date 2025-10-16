@@ -6019,6 +6019,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"dequal@npm:^2.0.0":
+  version: 2.0.3
+  resolution: "dequal@npm:2.0.3"
+  checksum: 8679b850e1a3d0ebbc46ee780d5df7b478c23f335887464023a631d1b9af051ad4a6595a44220f9ff8ff95a8ddccf019b5ad778a976fd7bbf77383d36f412f90
+  languageName: node
+  linkType: hard
+
 "destr@npm:^2.0.3":
   version: 2.0.5
   resolution: "destr@npm:2.0.5"
@@ -6047,10 +6054,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"devlop@npm:noop-package@1.0.0":
-  version: 1.0.0
-  resolution: "noop-package@npm:1.0.0"
-  checksum: 32da2e4f51a4762b07d102902e8c6b29458ab0c02e4305626f5639de47f7fbe1d55490371ac11bfd52de3e9d52f2872928c0524132c6477b8c44c2a3a5e38bee
+"devlop@npm:^1.0.0, devlop@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "devlop@npm:1.1.0"
+  dependencies:
+    dequal: ^2.0.0
+  checksum: d2ff650bac0bb6ef08c48f3ba98640bb5fec5cce81e9957eb620408d1bab1204d382a45b785c6b3314dc867bb0684936b84c6867820da6db97cbb5d3c15dd185
   languageName: node
   linkType: hard
 

@@ -107,7 +107,7 @@ export type {
   MarkdownRendererProps,
   MarkdownRendererComponents,
 } from './renderers/MarkdownRenderer';
-export type { MarkdownTheme, ThemePreference } from './core/themes';
+export type { MarkdownTheme, MarkdownThemeConfig, ThemeMode, ThemePreference } from './core/themes';
 export type {
   MarkdownStreamOptions,
   MarkdownStreamSource,

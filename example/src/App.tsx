@@ -17,6 +17,8 @@ import {
   type RevealMode,
   lightTheme,
   darkTheme,
+  type MarkdownThemeConfig,
+  type ThemeMode,
 } from 'react-native-markdown-stream';
 
 const STREAM_CHUNKS = [
@@ -138,10 +140,23 @@ export default function App() {
     scrollViewRef.current?.scrollToEnd?.({ animated: true });
   }, [contentVersion]);
 
-  const activeTheme = colorScheme === 'dark' ? darkTheme : lightTheme;
+  const baseMode: ThemeMode = colorScheme === 'dark' ? 'dark' : 'light';
+  const activeTheme = baseMode === 'dark' ? darkTheme : lightTheme;
+  const containerBackground = baseMode === 'dark' ? '#0B1120' : '#FFFFFF';
+
+  const streamTheme = useMemo<MarkdownThemeConfig>(
+    () => ({
+      base: baseMode,
+      colors: {
+        linkColor: '#F97316',
+        quoteBorderColor: '#F97316',
+      },
+    }),
+    [baseMode],
+  );
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: activeTheme.backgroundColor }]}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: containerBackground }]}>
       <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
       <ScrollView
         ref={handleScrollViewRef}
@@ -203,7 +218,7 @@ export default function App() {
           ) : null}
         </View>
         <MarkdownStream
-          theme={colorScheme === 'dark' ? 'dark' : 'light'}
+          theme={streamTheme}
           source={streamFactory}
           onReady={handleReady}
           onContentChange={handleContentChange}
