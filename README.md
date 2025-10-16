@@ -158,6 +158,8 @@ All chunks (strings, `Uint8Array`, objects with `toString`) are normalised to st
 | `content` | `string` | Fully rendered markdown. Bypasses streaming until you call `start`. |
 | `initialValue` | `string` | Markdown shown before the first chunk arrives. |
 | `theme` | `'light' \| 'dark' \| MarkdownTheme \| MarkdownThemeConfig` | Pick a preset or merge custom colors; defaults to light theme with transparent background. |
+| `textColor` | `string` | Override the resolved theme's primary text color without redefining the whole palette. |
+| `mutedTextColor` | `string` | Override the resolved theme's muted/secondary text color. |
 | `revealMode` | `'chunk' \| 'word' \| 'character'` | Controls how new content animates in. |
 | `revealDelay` | `number` | Delay (ms) between reveals; ignored when `revealMode="chunk"`. |
 | `autoStart` | `boolean` | Start streaming as soon as `source` exists (default `true`). |
@@ -184,7 +186,7 @@ Every major element exposes a customization hook:
 
 ## Theming
 
-Light and dark themes ship by default, both with transparent backgrounds so they blend into your layout. Override a single token or a whole palette by passing a `MarkdownTheme` or `MarkdownThemeConfig`.
+Light and dark themes ship by default, both with transparent container backgrounds so they blend into your layout. Override a single token or a whole palette by passing a `MarkdownTheme` or `MarkdownThemeConfig`, or use the `textColor` / `mutedTextColor` props for quick tweaks.
 
 ```tsx
 import {MarkdownStream} from 'react-native-markdown-stream';
@@ -203,6 +205,10 @@ import {MarkdownStream} from 'react-native-markdown-stream';
 ```
 
 Call `resolveTheme` if you need the concrete palette outside the component.
+
+## Handling incomplete markdown
+
+Streaming text often arrives with half-typed emphasis or unfinished links. Before parsing we run the content through a small sanitizer that auto-closes common Markdown markers and neutralises broken URLs. The implementation is adapted from [Vercel's streamdown `parse-incomplete-markdown`](https://github.com/vercel/streamdown/blob/main/packages/streamdown/lib/parse-incomplete-markdown.ts) (MIT licensed).
 
 ## Using `useMarkdownStream` directly
 

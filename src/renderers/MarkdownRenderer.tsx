@@ -20,6 +20,7 @@ import { MathBlock, type MathBlockProps } from './MathBlock';
 import { ImageBlock, type ImageBlockProps } from './ImageBlock';
 import { TextBlock } from './TextBlock';
 import { resolveTheme, type MarkdownTheme, type ThemePreference } from '../core/themes';
+import { INCOMPLETE_LINK_PLACEHOLDER } from '../core/incomplete-markdown';
 
 export interface MarkdownRendererComponents {
   codeBlock?: (props: CodeBlockProps) => ReactNode;
@@ -81,6 +82,12 @@ export function MarkdownRenderer({
   const resolvedTheme = useMemo(() => resolveTheme(theme), [theme]);
   const [lightboxImage, setLightboxImage] = useState<{ url: string; alt?: string } | null>(null);
   const [lightboxAspectRatio, setLightboxAspectRatio] = useState<number | undefined>(undefined);
+  const containerStyle = useMemo(() => {
+    if (!resolvedTheme.backgroundColor || resolvedTheme.backgroundColor === 'transparent') {
+      return null;
+    }
+    return { backgroundColor: resolvedTheme.backgroundColor };
+  }, [resolvedTheme.backgroundColor]);
 
   const openLink = async (url: string) => {
     if (onLinkPress) {
@@ -153,6 +160,16 @@ export function MarkdownRenderer({
       }
       case 'link': {
         const linkNode = node as Link;
+        const isIncompleteLink = linkNode.url === INCOMPLETE_LINK_PLACEHOLDER;
+
+        if (isIncompleteLink) {
+          return (
+            <Text key={key} style={[styles.paragraphText, { color: resolvedTheme.textColor }]}>
+              {renderInlineChildren(linkNode, key)}
+            </Text>
+          );
+        }
+
         return (
           <Text
             key={key}
@@ -528,7 +545,7 @@ export function MarkdownRenderer({
 
   return (
     <Fragment>
-      <View style={[styles.container, { backgroundColor: resolvedTheme.backgroundColor }]}>
+      <View style={[styles.container, containerStyle]}>
         {ast.children.map((node, index) => renderNode(node as Content, `block-${index}`))}
       </View>
       {lightbox}

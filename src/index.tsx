@@ -9,6 +9,7 @@ import {
   type MarkdownStreamSource,
   type UseMarkdownStreamResult,
 } from './hooks/useMarkdownStream';
+import { resolveTheme } from './core/themes';
 
 export interface MarkdownStreamProps
   extends Omit<MarkdownRendererProps, 'ast'>,
@@ -38,6 +39,14 @@ export interface MarkdownStreamProps
    * When set to true the stream is stopped immediately.
    */
   shouldStop?: boolean;
+  /**
+   * Override the resolved theme's primary text color without redefining the full theme.
+   */
+  textColor?: string;
+  /**
+   * Override the resolved theme's muted text color without redefining the full theme.
+   */
+  mutedTextColor?: string;
 }
 
 export function MarkdownStream({
@@ -54,6 +63,8 @@ export function MarkdownStream({
   revealMode,
   revealDelay,
   theme = 'light',
+  textColor,
+  mutedTextColor,
   ...rendererProps
 }: MarkdownStreamProps) {
   const stream = useMarkdownStream({
@@ -100,7 +111,19 @@ export function MarkdownStream({
 
   const ast: Root = useMemo(() => parseMarkdown(stream.content), [stream.content]);
 
-  return <MarkdownRenderer {...rendererProps} theme={theme} ast={ast} />;
+  const themePreference = useMemo(() => {
+    if (!textColor && !mutedTextColor) {
+      return theme;
+    }
+    const baseTheme = resolveTheme(theme);
+    return {
+      ...baseTheme,
+      ...(textColor ? { textColor } : {}),
+      ...(mutedTextColor ? { mutedTextColor } : {}),
+    };
+  }, [mutedTextColor, textColor, theme]);
+
+  return <MarkdownRenderer {...rendererProps} theme={themePreference} ast={ast} />;
 }
 
 export type {
