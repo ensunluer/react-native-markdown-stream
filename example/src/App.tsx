@@ -58,9 +58,7 @@ const STREAM_CHUNKS = [
   '---\n\n',
   '> **Tip:** You can use lists and code highlighting inside block quotes within the stream.\n\n',
   'Math support is also available:\n\n',
-  '$$\n' +
-    'e^{i\\pi} + 1 = 0\n' +
-  '$$\n\n',
+  '$$\n' + 'e^{i\\pi} + 1 = 0\n' + '$$\n\n',
   'Inline math example: $c^2 = a^2 + b^2$.\n\n',
   '![Live Markdown preview](https://images.unsplash.com/photo-1523475472560-d2df97ec485c?auto=format&fit=crop&w=800&q=80 "Live Markdown rendering")\n\n',
   '_Images support error/loading states, captions, and lightbox previews._\n\n',
@@ -82,15 +80,29 @@ const STREAM_CHUNKS = [
   '_Streaming complete!_ ✅\n',
 ];
 
-const GradientButton = ({ title, onPress }: { title: string; onPress: () => void }) => {
+const GradientButton = ({
+  title,
+  onPress,
+}: {
+  title: string;
+  onPress: () => void;
+}) => {
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulse, { toValue: 1, duration: 2200, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 0, duration: 2200, useNativeDriver: true }),
-      ]),
+        Animated.timing(pulse, {
+          toValue: 1,
+          duration: 2200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulse, {
+          toValue: 0,
+          duration: 2200,
+          useNativeDriver: true,
+        }),
+      ])
     );
 
     loop.start();
@@ -107,7 +119,9 @@ const GradientButton = ({ title, onPress }: { title: string; onPress: () => void
 
   return (
     <Pressable onPress={onPress} style={styles.gradientButtonWrapper}>
-      <Animated.View style={[styles.gradientAnimated, { transform: [{ scale }] }]}>
+      <Animated.View
+        style={[styles.gradientAnimated, { transform: [{ scale }] }]}
+      >
         <LinearGradient
           colors={['#6366F1', '#8B5CF6', '#EC4899', '#F97316']}
           start={{ x: 0, y: 0 }}
@@ -141,7 +155,8 @@ export default function App() {
   const [quoteBorderColor, setQuoteBorderColor] = useState('#F97316');
   const [backgroundColorOverride, setBackgroundColorOverride] = useState('');
   const [enableCodeCopyToggle, setEnableCodeCopyToggle] = useState(true);
-  const [enableImageLightboxToggle, setEnableImageLightboxToggle] = useState(true);
+  const [enableImageLightboxToggle, setEnableImageLightboxToggle] =
+    useState(true);
   const [enableStopControl, setEnableStopControl] = useState(true);
   const [enableScrollToTop, setEnableScrollToTop] = useState(true);
   const [hasStreamEnded, setHasStreamEnded] = useState(false);
@@ -154,7 +169,11 @@ export default function App() {
   const themeAnim = useRef(new Animated.Value(1)).current;
 
   const createCollapsibleToggle = useCallback(
-    (current: boolean, setState: (next: boolean) => void, animation: Animated.Value) => {
+    (
+      current: boolean,
+      setState: (next: boolean) => void,
+      animation: Animated.Value
+    ) => {
       const next = !current;
       setState(next);
       Animated.timing(animation, {
@@ -163,7 +182,7 @@ export default function App() {
         useNativeDriver: false,
       }).start();
     },
-    [],
+    []
   );
 
   const streamFactory = useMemo(() => createDemoStream(600), []);
@@ -193,19 +212,16 @@ export default function App() {
     setHasStreamEnded(true);
   }, []);
 
-  const handleRevealModeChange = useCallback(
-    (mode: RevealMode) => {
-      setRevealMode(mode);
-      if (mode === 'chunk') {
-        setRevealDelay(0);
-      } else if (mode === 'word') {
-        setRevealDelay(32);
-      } else {
-        setRevealDelay(20);
-      }
-    },
-    [],
-  );
+  const handleRevealModeChange = useCallback((mode: RevealMode) => {
+    setRevealMode(mode);
+    if (mode === 'chunk') {
+      setRevealDelay(0);
+    } else if (mode === 'word') {
+      setRevealDelay(32);
+    } else {
+      setRevealDelay(20);
+    }
+  }, []);
 
   const handleSpeedAdjust = useCallback((delta: number) => {
     setRevealDelay((current) => {
@@ -248,27 +264,42 @@ export default function App() {
       colors: {
         linkColor,
         quoteBorderColor,
-        ...(backgroundColorOverride ? { backgroundColor: backgroundColorOverride } : {}),
+        ...(backgroundColorOverride
+          ? { backgroundColor: backgroundColorOverride }
+          : {}),
       },
     }),
-    [backgroundColorOverride, baseMode, linkColor, quoteBorderColor],
+    [backgroundColorOverride, baseMode, linkColor, quoteBorderColor]
   );
 
-  const handleCodeCopy = useCallback(({ language }: { value: string; language?: string | null }) => {
-    Alert.alert('Copy Code', `Attempting to copy a ${language ?? 'plain text'} block.`);
-    return false;
-  }, []);
+  const handleCodeCopy = useCallback(
+    ({ language }: { value: string; language?: string | null }) => {
+      Alert.alert(
+        'Copy Code',
+        `Attempting to copy a ${language ?? 'plain text'} block.`
+      );
+      return false;
+    },
+    []
+  );
 
-  const handleBlockLongPress = useCallback((payload: { node: { type: string } }) => {
-    Alert.alert('Long Press', `You long-pressed a ${payload.node.type} block.`);
-  }, []);
+  const handleBlockLongPress = useCallback(
+    (payload: { node: { type: string } }) => {
+      Alert.alert(
+        'Long Press',
+        `You long-pressed a ${payload.node.type} block.`
+      );
+    },
+    []
+  );
 
   const handleScrollToTop = useCallback(() => {
     scrollViewRef.current?.scrollTo?.({ y: 0, animated: true });
   }, []);
 
   useEffect(() => {
-    const shouldShow = enableScrollToTop && hasStreamEnded && scrollOffset >= 40;
+    const shouldShow =
+      enableScrollToTop && hasStreamEnded && scrollOffset >= 40;
     setShouldShowScrollTop(shouldShow);
   }, [enableScrollToTop, hasStreamEnded, scrollOffset]);
 
@@ -293,8 +324,12 @@ export default function App() {
   };
 
   return (
-    <SafeAreaView style={[styles.safeArea, { backgroundColor: containerBackground }]}>
-      <StatusBar barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'} />
+    <SafeAreaView
+      style={[styles.safeArea, { backgroundColor: containerBackground }]}
+    >
+      <StatusBar
+        barStyle={colorScheme === 'dark' ? 'light-content' : 'dark-content'}
+      />
       <ScrollView
         ref={handleScrollViewRef}
         contentContainerStyle={styles.scrollContent}
@@ -304,10 +339,19 @@ export default function App() {
       >
         <View style={styles.centerColumn}>
           <View style={styles.header}>
-            <Text style={[styles.overline, { color: activeTheme.mutedTextColor }]}>Streaming Markdown Demo</Text>
-            <Text style={[styles.title, { color: activeTheme.textColor }]}>react-native-markdown-stream</Text>
-            <Text style={[styles.caption, { color: activeTheme.mutedTextColor }]}>
-              Live AI/chat transcripts rendered with reveal controls, code copy, images, and more.
+            <Text
+              style={[styles.overline, { color: activeTheme.mutedTextColor }]}
+            >
+              Streaming Markdown Demo
+            </Text>
+            <Text style={[styles.title, { color: activeTheme.textColor }]}>
+              react-native-markdown-stream
+            </Text>
+            <Text
+              style={[styles.caption, { color: activeTheme.mutedTextColor }]}
+            >
+              Live AI/chat transcripts rendered with reveal controls, code copy,
+              images, and more.
             </Text>
           </View>
 
@@ -317,7 +361,13 @@ export default function App() {
             theme={activeTheme}
             animation={playbackAnim}
             expanded={isPlaybackExpanded}
-            onToggle={() => createCollapsibleToggle(isPlaybackExpanded, setIsPlaybackExpanded, playbackAnim)}
+            onToggle={() =>
+              createCollapsibleToggle(
+                isPlaybackExpanded,
+                setIsPlaybackExpanded,
+                playbackAnim
+              )
+            }
             cardStyle={styles.controlsCard}
           >
             <View style={styles.modeButtons}>
@@ -329,7 +379,9 @@ export default function App() {
                     style={[
                       styles.modeButton,
                       {
-                        borderColor: isActive ? activeTheme.linkColor : activeTheme.codeBorderColor,
+                        borderColor: isActive
+                          ? activeTheme.linkColor
+                          : activeTheme.codeBorderColor,
                         backgroundColor: isActive
                           ? activeTheme.backgroundColor === 'transparent'
                             ? 'rgba(37, 99, 235, 0.08)'
@@ -342,10 +394,18 @@ export default function App() {
                     <Text
                       style={[
                         styles.modeButtonText,
-                        { color: isActive ? activeTheme.linkColor : activeTheme.mutedTextColor },
+                        {
+                          color: isActive
+                            ? activeTheme.linkColor
+                            : activeTheme.mutedTextColor,
+                        },
                       ]}
                     >
-                      {mode === 'chunk' ? 'Chunk' : mode === 'word' ? 'Word' : 'Character'}
+                      {mode === 'chunk'
+                        ? 'Chunk'
+                        : mode === 'word'
+                          ? 'Word'
+                          : 'Character'}
                     </Text>
                   </Pressable>
                 );
@@ -355,24 +415,63 @@ export default function App() {
             {revealMode !== 'chunk' ? (
               <View style={styles.speedControls}>
                 <Pressable
-                  style={[styles.speedButton, { borderColor: activeTheme.codeBorderColor }]}
+                  style={[
+                    styles.speedButton,
+                    { borderColor: activeTheme.codeBorderColor },
+                  ]}
                   onPress={() => handleSpeedAdjust(8)}
                 >
-                  <Text style={[styles.speedButtonText, { color: activeTheme.linkColor }]}>Slower</Text>
+                  <Text
+                    style={[
+                      styles.speedButtonText,
+                      { color: activeTheme.linkColor },
+                    ]}
+                  >
+                    Slower
+                  </Text>
                 </Pressable>
                 <View style={styles.speedReadout}>
-                  <Text style={[styles.speedValue, { color: activeTheme.textColor }]}>{revealDelay} ms</Text>
-                  <Text style={[styles.speedLabel, { color: activeTheme.mutedTextColor }]}>Delay</Text>
+                  <Text
+                    style={[
+                      styles.speedValue,
+                      { color: activeTheme.textColor },
+                    ]}
+                  >
+                    {revealDelay} ms
+                  </Text>
+                  <Text
+                    style={[
+                      styles.speedLabel,
+                      { color: activeTheme.mutedTextColor },
+                    ]}
+                  >
+                    Delay
+                  </Text>
                 </View>
                 <Pressable
-                  style={[styles.speedButton, { borderColor: activeTheme.codeBorderColor }]}
+                  style={[
+                    styles.speedButton,
+                    { borderColor: activeTheme.codeBorderColor },
+                  ]}
                   onPress={() => handleSpeedAdjust(-8)}
                 >
-                  <Text style={[styles.speedButtonText, { color: activeTheme.linkColor }]}>Faster</Text>
+                  <Text
+                    style={[
+                      styles.speedButtonText,
+                      { color: activeTheme.linkColor },
+                    ]}
+                  >
+                    Faster
+                  </Text>
                 </Pressable>
               </View>
             ) : (
-              <Text style={[styles.chunkHint, { color: activeTheme.mutedTextColor }]}>
+              <Text
+                style={[
+                  styles.chunkHint,
+                  { color: activeTheme.mutedTextColor },
+                ]}
+              >
                 Chunk mode shows each incoming piece instantly.
               </Text>
             )}
@@ -381,10 +480,20 @@ export default function App() {
               <GradientButton title="Restart Stream" onPress={handleRestart} />
               {enableStopControl ? (
                 <Pressable
-                  style={[styles.stopButton, { borderColor: activeTheme.codeBorderColor }]}
+                  style={[
+                    styles.stopButton,
+                    { borderColor: activeTheme.codeBorderColor },
+                  ]}
                   onPress={handleStop}
                 >
-                  <Text style={[styles.stopButtonText, { color: activeTheme.mutedTextColor }]}>Stop</Text>
+                  <Text
+                    style={[
+                      styles.stopButtonText,
+                      { color: activeTheme.mutedTextColor },
+                    ]}
+                  >
+                    Stop
+                  </Text>
                 </Pressable>
               ) : null}
             </View>
@@ -395,43 +504,88 @@ export default function App() {
             theme={activeTheme}
             animation={themeAnim}
             expanded={isThemeExpanded}
-            onToggle={() => createCollapsibleToggle(isThemeExpanded, setIsThemeExpanded, themeAnim)}
+            onToggle={() =>
+              createCollapsibleToggle(
+                isThemeExpanded,
+                setIsThemeExpanded,
+                themeAnim
+              )
+            }
             cardStyle={styles.configCard}
           >
             <Animated.View>
               <View style={styles.fieldGroup}>
                 <View style={styles.fieldRow}>
-                  <Text style={[styles.fieldLabel, { color: activeTheme.mutedTextColor }]}>Link Color</Text>
+                  <Text
+                    style={[
+                      styles.fieldLabel,
+                      { color: activeTheme.mutedTextColor },
+                    ]}
+                  >
+                    Link Color
+                  </Text>
                   <TextInput
                     value={linkColor}
                     onChangeText={setLinkColor}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    style={[styles.fieldInput, { color: activeTheme.textColor, borderColor: activeTheme.codeBorderColor }]}
+                    style={[
+                      styles.fieldInput,
+                      {
+                        color: activeTheme.textColor,
+                        borderColor: activeTheme.codeBorderColor,
+                      },
+                    ]}
                     placeholder="#F97316"
                     placeholderTextColor={`${activeTheme.mutedTextColor}99`}
                   />
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={[styles.fieldLabel, { color: activeTheme.mutedTextColor }]}>Quote Border</Text>
+                  <Text
+                    style={[
+                      styles.fieldLabel,
+                      { color: activeTheme.mutedTextColor },
+                    ]}
+                  >
+                    Quote Border
+                  </Text>
                   <TextInput
                     value={quoteBorderColor}
                     onChangeText={setQuoteBorderColor}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    style={[styles.fieldInput, { color: activeTheme.textColor, borderColor: activeTheme.codeBorderColor }]}
+                    style={[
+                      styles.fieldInput,
+                      {
+                        color: activeTheme.textColor,
+                        borderColor: activeTheme.codeBorderColor,
+                      },
+                    ]}
                     placeholder="#F97316"
                     placeholderTextColor={`${activeTheme.mutedTextColor}99`}
                   />
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={[styles.fieldLabel, { color: activeTheme.mutedTextColor }]}>Background</Text>
+                  <Text
+                    style={[
+                      styles.fieldLabel,
+                      { color: activeTheme.mutedTextColor },
+                    ]}
+                  >
+                    Background
+                  </Text>
                   <TextInput
                     value={backgroundColorOverride}
                     onChangeText={setBackgroundColorOverride}
                     autoCapitalize="none"
                     autoCorrect={false}
-                    style={[styles.fieldInput, { color: activeTheme.textColor, borderColor: activeTheme.codeBorderColor }]}
+                    style={[
+                      styles.fieldInput,
+                      {
+                        color: activeTheme.textColor,
+                        borderColor: activeTheme.codeBorderColor,
+                      },
+                    ]}
                     placeholder="transparent"
                     placeholderTextColor={`${activeTheme.mutedTextColor}99`}
                   />
@@ -441,8 +595,20 @@ export default function App() {
               <View style={styles.switchGrid}>
                 <View style={styles.switchRow}>
                   <View>
-                    <Text style={[styles.switchLabel, { color: activeTheme.textColor }]}>Code copy</Text>
-                    <Text style={[styles.switchHint, { color: activeTheme.mutedTextColor }]}>
+                    <Text
+                      style={[
+                        styles.switchLabel,
+                        { color: activeTheme.textColor },
+                      ]}
+                    >
+                      Code copy
+                    </Text>
+                    <Text
+                      style={[
+                        styles.switchHint,
+                        { color: activeTheme.mutedTextColor },
+                      ]}
+                    >
                       Show copy action on fenced blocks.
                     </Text>
                   </View>
@@ -455,8 +621,20 @@ export default function App() {
                 </View>
                 <View style={styles.switchRow}>
                   <View>
-                    <Text style={[styles.switchLabel, { color: activeTheme.textColor }]}>Image lightbox</Text>
-                    <Text style={[styles.switchHint, { color: activeTheme.mutedTextColor }]}>
+                    <Text
+                      style={[
+                        styles.switchLabel,
+                        { color: activeTheme.textColor },
+                      ]}
+                    >
+                      Image lightbox
+                    </Text>
+                    <Text
+                      style={[
+                        styles.switchHint,
+                        { color: activeTheme.mutedTextColor },
+                      ]}
+                    >
                       Tap to preview images fullscreen.
                     </Text>
                   </View>
@@ -464,13 +642,27 @@ export default function App() {
                     value={enableImageLightboxToggle}
                     onValueChange={setEnableImageLightboxToggle}
                     trackColor={{ false: '#d4d4d8', true: '#6366F1' }}
-                    thumbColor={enableImageLightboxToggle ? '#f8fafc' : '#f4f4f5'}
+                    thumbColor={
+                      enableImageLightboxToggle ? '#f8fafc' : '#f4f4f5'
+                    }
                   />
                 </View>
                 <View style={styles.switchRow}>
                   <View>
-                    <Text style={[styles.switchLabel, { color: activeTheme.textColor }]}>Stop control</Text>
-                    <Text style={[styles.switchHint, { color: activeTheme.mutedTextColor }]}>
+                    <Text
+                      style={[
+                        styles.switchLabel,
+                        { color: activeTheme.textColor },
+                      ]}
+                    >
+                      Stop control
+                    </Text>
+                    <Text
+                      style={[
+                        styles.switchHint,
+                        { color: activeTheme.mutedTextColor },
+                      ]}
+                    >
                       Add a button to halt streaming.
                     </Text>
                   </View>
@@ -483,8 +675,20 @@ export default function App() {
                 </View>
                 <View style={styles.switchRow}>
                   <View>
-                    <Text style={[styles.switchLabel, { color: activeTheme.textColor }]}>Scroll-to-top helper</Text>
-                    <Text style={[styles.switchHint, { color: activeTheme.mutedTextColor }]}>
+                    <Text
+                      style={[
+                        styles.switchLabel,
+                        { color: activeTheme.textColor },
+                      ]}
+                    >
+                      Scroll-to-top helper
+                    </Text>
+                    <Text
+                      style={[
+                        styles.switchHint,
+                        { color: activeTheme.mutedTextColor },
+                      ]}
+                    >
                       Show a floating button when the stream ends.
                     </Text>
                   </View>
@@ -504,7 +708,9 @@ export default function App() {
               styles.previewCard,
               {
                 backgroundColor:
-                  activeTheme.backgroundColor === 'transparent' ? containerBackground : activeTheme.backgroundColor,
+                  activeTheme.backgroundColor === 'transparent'
+                    ? containerBackground
+                    : activeTheme.backgroundColor,
                 borderColor: activeTheme.codeBorderColor,
               },
             ]}
@@ -531,10 +737,20 @@ export default function App() {
         pointerEvents={shouldShowScrollTop ? 'auto' : 'none'}
       >
         <Pressable
-          style={[styles.scrollTopButton, { backgroundColor: activeTheme.codeBackgroundColor, borderColor: activeTheme.codeBorderColor }]}
+          style={[
+            styles.scrollTopButton,
+            {
+              backgroundColor: activeTheme.codeBackgroundColor,
+              borderColor: activeTheme.codeBorderColor,
+            },
+          ]}
           onPress={handleScrollToTop}
         >
-          <Text style={[styles.scrollTopIcon, { color: activeTheme.linkColor }]}>↑</Text>
+          <Text
+            style={[styles.scrollTopIcon, { color: activeTheme.linkColor }]}
+          >
+            ↑
+          </Text>
         </Pressable>
       </Animated.View>
     </SafeAreaView>

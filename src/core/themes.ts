@@ -28,8 +28,8 @@ export type ThemePreference = ThemeMode | MarkdownTheme | MarkdownThemeConfig;
 
 export const lightTheme: MarkdownTheme = {
   backgroundColor: 'transparent',
-  textColor: '#1F2933',
-  mutedTextColor: '#52606D',
+  textColor: '#000000',
+  mutedTextColor: '#4B5563',
   linkColor: '#2563EB',
   codeBackgroundColor: '#F3F4F6',
   codeBorderColor: '#E5E7EB',
@@ -40,8 +40,8 @@ export const lightTheme: MarkdownTheme = {
 
 export const darkTheme: MarkdownTheme = {
   backgroundColor: 'transparent',
-  textColor: '#E5E7EB',
-  mutedTextColor: '#9CA3AF',
+  textColor: '#FFFFFF',
+  mutedTextColor: '#CBD5F5',
   linkColor: '#60A5FA',
   codeBackgroundColor: '#1F2937',
   codeBorderColor: '#374151',
@@ -67,10 +67,15 @@ function isMarkdownTheme(value: unknown): value is MarkdownTheme {
     return false;
   }
 
-  return THEME_KEYS.every((key) => typeof (value as Record<string, unknown>)[key] === 'string');
+  return THEME_KEYS.every(
+    (key) => typeof (value as Record<string, unknown>)[key] === 'string'
+  );
 }
 
-function mergeThemes(base: MarkdownTheme, overrides?: Partial<MarkdownTheme>): MarkdownTheme {
+function mergeThemes(
+  base: MarkdownTheme,
+  overrides?: Partial<MarkdownTheme>
+): MarkdownTheme {
   if (!overrides) {
     return { ...base };
   }
@@ -84,7 +89,9 @@ function mergeThemes(base: MarkdownTheme, overrides?: Partial<MarkdownTheme>): M
   return result;
 }
 
-function resolveBaseTheme(base: ThemeMode | MarkdownTheme | undefined): MarkdownTheme {
+function resolveBaseTheme(
+  base: ThemeMode | MarkdownTheme | undefined
+): MarkdownTheme {
   if (!base) {
     return mergeThemes(lightTheme);
   }
@@ -98,7 +105,9 @@ function resolveBaseTheme(base: ThemeMode | MarkdownTheme | undefined): Markdown
   return mergeThemes(lightTheme, base);
 }
 
-export function resolveTheme(theme: ThemePreference | undefined): MarkdownTheme {
+export function resolveTheme(
+  theme: ThemePreference | undefined
+): MarkdownTheme {
   if (!theme) {
     return mergeThemes(lightTheme);
   }

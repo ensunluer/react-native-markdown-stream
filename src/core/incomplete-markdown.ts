@@ -1,3 +1,23 @@
+/**
+ * Adapted from streamdown's `parse-incomplete-markdown.ts`
+ * Source: https://github.com/vercel/streamdown/blob/main/packages/streamdown/lib/parse-incomplete-markdown.ts
+ *
+ * Copyright 2023 Vercel, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Modifications: trimmed for React Native usage and simplified placeholder handling.
+ */
 const linkImagePattern = /(!?\[)([^\]]*?)$/;
 const boldPattern = /(\*\*)([^*]*?)$/;
 const italicPattern = /(__)([^_]*?)$/;
@@ -11,7 +31,9 @@ export const INCOMPLETE_LINK_PLACEHOLDER = 'streamdown:incomplete-link';
 
 function hasCompleteCodeBlock(text: string): boolean {
   const tripleBackticks = (text.match(/```/g) || []).length;
-  return tripleBackticks > 0 && tripleBackticks % 2 === 0 && text.includes('\n');
+  return (
+    tripleBackticks > 0 && tripleBackticks % 2 === 0 && text.includes('\n')
+  );
 }
 
 function handleIncompleteLinksAndImages(text: string): string {
@@ -19,13 +41,16 @@ function handleIncompleteLinksAndImages(text: string): string {
   const incompleteLinkUrlMatch = text.match(incompleteLinkUrlPattern);
 
   if (incompleteLinkUrlMatch) {
-    const [, marker = '', linkText = '', partialUrl = ''] = incompleteLinkUrlMatch;
+    const [, marker = '', linkText = '', partialUrl = ''] =
+      incompleteLinkUrlMatch;
     const isImage = marker === '!';
-    const matchStart = text.lastIndexOf(`${isImage ? '!' : ''}[${linkText}](${partialUrl}`);
+    const matchStart = text.lastIndexOf(
+      `${isImage ? '!' : ''}[${linkText}](${partialUrl}`
+    );
     const beforeLink = text.substring(0, matchStart);
 
     if (isImage) {
-      return beforeLink;
+      return `${beforeLink}${linkText}`;
     }
 
     return `${beforeLink}[${linkText}](${INCOMPLETE_LINK_PLACEHOLDER})`;
@@ -34,11 +59,12 @@ function handleIncompleteLinksAndImages(text: string): string {
   const linkMatch = text.match(linkImagePattern);
 
   if (linkMatch) {
-    const [, marker = ''] = linkMatch;
+    const [, marker = '', trailing = ''] = linkMatch;
     const isImage = marker.startsWith('!');
     if (isImage) {
       const startIndex = text.lastIndexOf(marker);
-      return text.substring(0, startIndex);
+      const beforeMarker = text.substring(0, startIndex);
+      return `${beforeMarker}${trailing}`;
     }
 
     return `${text}](${INCOMPLETE_LINK_PLACEHOLDER})`;
@@ -63,7 +89,8 @@ function handleIncompleteBold(text: string): string {
     const markerIndex = text.lastIndexOf(marker);
     const beforeMarker = text.substring(0, markerIndex);
     const lastNewlineBeforeMarker = beforeMarker.lastIndexOf('\n');
-    const lineStart = lastNewlineBeforeMarker === -1 ? 0 : lastNewlineBeforeMarker + 1;
+    const lineStart =
+      lastNewlineBeforeMarker === -1 ? 0 : lastNewlineBeforeMarker + 1;
     const lineBeforeMarker = text.substring(lineStart, markerIndex);
 
     if (/^[\s]*[-*+][\s]+$/.test(lineBeforeMarker)) {
@@ -89,12 +116,12 @@ function handleIncompleteDoubleUnderscoreItalic(text: string): string {
     if (!contentAfterMarker || /^[\s_~*`]*$/.test(contentAfterMarker)) {
       return text;
     }
-  
 
     const markerIndex = text.lastIndexOf(marker);
     const beforeMarker = text.substring(0, markerIndex);
     const lastNewlineBeforeMarker = beforeMarker.lastIndexOf('\n');
-    const lineStart = lastNewlineBeforeMarker === -1 ? 0 : lastNewlineBeforeMarker + 1;
+    const lineStart =
+      lastNewlineBeforeMarker === -1 ? 0 : lastNewlineBeforeMarker + 1;
     const lineBeforeMarker = text.substring(lineStart, markerIndex);
 
     if (/^[\s]*[-*+][\s]+$/.test(lineBeforeMarker)) {
@@ -134,7 +161,10 @@ function countSingleAsterisks(text: string): number {
       }
 
       const beforeAsterisk = text.substring(lineStartIndex, index);
-      if (beforeAsterisk.trim() === '' && (nextChar === ' ' || nextChar === '\t')) {
+      if (
+        beforeAsterisk.trim() === '' &&
+        (nextChar === ' ' || nextChar === '\t')
+      ) {
         return acc;
       }
 
@@ -166,9 +196,14 @@ function handleIncompleteSingleAsteriskItalic(text: string): string {
       return text;
     }
 
-    const contentAfterFirstAsterisk = text.substring(firstSingleAsteriskIndex + 1);
+    const contentAfterFirstAsterisk = text.substring(
+      firstSingleAsteriskIndex + 1
+    );
 
-    if (!contentAfterFirstAsterisk || /^[\s_~*`]*$/.test(contentAfterFirstAsterisk)) {
+    if (
+      !contentAfterFirstAsterisk ||
+      /^[\s_~*`]*$/.test(contentAfterFirstAsterisk)
+    ) {
       return text;
     }
 
@@ -269,9 +304,14 @@ function handleIncompleteSingleUnderscoreItalic(text: string): string {
       return text;
     }
 
-    const contentAfterFirstUnderscore = text.substring(firstSingleUnderscoreIndex + 1);
+    const contentAfterFirstUnderscore = text.substring(
+      firstSingleUnderscoreIndex + 1
+    );
 
-    if (!contentAfterFirstUnderscore || /^[\s_~*`]*$/.test(contentAfterFirstUnderscore)) {
+    if (
+      !contentAfterFirstUnderscore ||
+      /^[\s_~*`]*$/.test(contentAfterFirstUnderscore)
+    ) {
       return text;
     }
 
@@ -279,7 +319,10 @@ function handleIncompleteSingleUnderscoreItalic(text: string): string {
     if (singleUnderscores % 2 === 1) {
       const trailingNewlineMatch = text.match(/\n+$/);
       if (trailingNewlineMatch) {
-        const textBeforeNewlines = text.slice(0, -trailingNewlineMatch[0].length);
+        const textBeforeNewlines = text.slice(
+          0,
+          -trailingNewlineMatch[0].length
+        );
         return `${textBeforeNewlines}_${trailingNewlineMatch[0]}`;
       }
       return `${text}_`;
@@ -291,8 +334,10 @@ function handleIncompleteSingleUnderscoreItalic(text: string): string {
 
 function isPartOfTripleBacktick(text: string, index: number): boolean {
   const isTripleStart = text.substring(index, index + 3) === '```';
-  const isTripleMiddle = index > 0 && text.substring(index - 1, index + 2) === '```';
-  const isTripleEnd = index > 1 && text.substring(index - 2, index + 1) === '```';
+  const isTripleMiddle =
+    index > 0 && text.substring(index - 1, index + 2) === '```';
+  const isTripleEnd =
+    index > 1 && text.substring(index - 2, index + 1) === '```';
 
   return isTripleStart || isTripleMiddle || isTripleEnd;
 }
@@ -319,7 +364,11 @@ function handleIncompleteInlineCode(text: string): string {
   const allTripleBackticks = (text.match(/```/g) || []).length;
   const insideIncompleteCodeBlock = allTripleBackticks % 2 === 1;
 
-  if (allTripleBackticks > 0 && allTripleBackticks % 2 === 0 && text.includes('\n')) {
+  if (
+    allTripleBackticks > 0 &&
+    allTripleBackticks % 2 === 0 &&
+    text.includes('\n')
+  ) {
     return text;
   }
 
@@ -372,7 +421,8 @@ function handleIncompleteBlockKatex(text: string): string {
   }
 
   const firstDollarIndex = text.indexOf('$$');
-  const hasNewlineAfterStart = firstDollarIndex !== -1 && text.indexOf('\n', firstDollarIndex) !== -1;
+  const hasNewlineAfterStart =
+    firstDollarIndex !== -1 && text.indexOf('\n', firstDollarIndex) !== -1;
 
   if (hasNewlineAfterStart && !text.endsWith('\n')) {
     return `${text}\n$$`;

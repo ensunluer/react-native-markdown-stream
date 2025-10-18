@@ -39,7 +39,8 @@ export function CodeBlock({
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const resetTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showCopyButton = typeof onCopyPress === 'function';
-  const copyLabel = copyState === 'copied' ? 'Copied' : copyButtonLabel ?? 'Copy';
+  const copyLabel =
+    copyState === 'copied' ? 'Copied' : (copyButtonLabel ?? 'Copy');
 
   const handleCopyPress = () => {
     if (!onCopyPress) {
@@ -75,11 +76,30 @@ export function CodeBlock({
   }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.codeBackgroundColor, borderColor: theme.codeBorderColor }, containerStyle]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: theme.codeBackgroundColor,
+          borderColor: theme.codeBorderColor,
+        },
+        containerStyle,
+      ]}
+    >
       {showCopyButton ? (
         <View style={styles.copyRow}>
           <Pressable style={styles.copyButton} onPress={handleCopyPress}>
-            <Text style={[styles.copyButtonText, { color: copyState === 'copied' ? theme.mutedTextColor : theme.linkColor }]}>
+            <Text
+              style={[
+                styles.copyButtonText,
+                {
+                  color:
+                    copyState === 'copied'
+                      ? theme.mutedTextColor
+                      : theme.linkColor,
+                },
+              ]}
+            >
               {copyLabel}
             </Text>
           </Pressable>
@@ -88,7 +108,9 @@ export function CodeBlock({
       {lines.map((line, index) => (
         <View key={`line-${index}`} style={styles.lineContainer}>
           {showLineNumbers ? (
-            <Text style={[styles.lineNumber, { color: theme.mutedTextColor }]}>{index + 1}</Text>
+            <Text style={[styles.lineNumber, { color: theme.mutedTextColor }]}>
+              {index + 1}
+            </Text>
           ) : null}
           <Text
             style={[

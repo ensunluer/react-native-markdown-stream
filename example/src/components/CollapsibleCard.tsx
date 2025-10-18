@@ -39,15 +39,24 @@ export function CollapsibleCard({
     <View
       style={[
         styles.card,
-        { backgroundColor: theme.codeBackgroundColor, borderColor: theme.codeBorderColor },
+        {
+          backgroundColor: theme.codeBackgroundColor,
+          borderColor: theme.codeBorderColor,
+        },
         cardStyle,
       ]}
     >
       <Pressable style={styles.cardHeader} onPress={onToggle}>
         <View style={styles.cardHeaderText}>
-          <Text style={[styles.cardTitle, { color: theme.textColor }]}>{title}</Text>
+          <Text style={[styles.cardTitle, { color: theme.textColor }]}>
+            {title}
+          </Text>
           {subtitle ? (
-            <Text style={[styles.cardSubtitle, { color: theme.mutedTextColor }]}>{subtitle}</Text>
+            <Text
+              style={[styles.cardSubtitle, { color: theme.mutedTextColor }]}
+            >
+              {subtitle}
+            </Text>
           ) : null}
         </View>
         <View style={styles.chevronContainer}>
@@ -71,7 +80,10 @@ export function CollapsibleCard({
           </Animated.Text>
         </View>
       </Pressable>
-      <Animated.View style={[styles.cardContent, containerStyle]} pointerEvents={expanded ? 'auto' : 'none'}>
+      <Animated.View
+        style={[styles.cardContent, containerStyle]}
+        pointerEvents={expanded ? 'auto' : 'none'}
+      >
         {expanded ? children : null}
       </Animated.View>
     </View>

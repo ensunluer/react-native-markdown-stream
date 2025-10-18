@@ -25,7 +25,7 @@ function resolveMathView(): MathViewComponent | null {
     cachedMathView = component;
   } catch (error) {
     console.warn(
-      '[react-native-markdown-stream] Unable to load react-native-math-view. Falling back to plain text rendering for math blocks.',
+      '[react-native-markdown-stream] Unable to load react-native-math-view. Falling back to plain text rendering for math blocks.'
     );
     cachedMathView = null;
   }
@@ -41,7 +41,13 @@ export interface MathBlockProps {
   textStyle?: StyleProp<TextStyle>;
 }
 
-export function MathBlock({ value, inline = false, theme, containerStyle, textStyle }: MathBlockProps) {
+export function MathBlock({
+  value,
+  inline = false,
+  theme,
+  containerStyle,
+  textStyle,
+}: MathBlockProps) {
   const MathView = useMemo(resolveMathView, []);
 
   if (!value.trim()) {
@@ -64,7 +70,9 @@ export function MathBlock({ value, inline = false, theme, containerStyle, textSt
 
   if (inline) {
     return (
-      <Text style={[styles.inlineFallback, { color: theme.textColor }, textStyle]}>
+      <Text
+        style={[styles.inlineFallback, { color: theme.textColor }, textStyle]}
+      >
         {`$${value}$`}
       </Text>
     );
@@ -81,7 +89,15 @@ export function MathBlock({ value, inline = false, theme, containerStyle, textSt
         containerStyle,
       ]}
     >
-      <Text style={[styles.blockFallbackText, { color: theme.textColor }, textStyle]}>{value}</Text>
+      <Text
+        style={[
+          styles.blockFallbackText,
+          { color: theme.textColor },
+          textStyle,
+        ]}
+      >
+        {value}
+      </Text>
     </View>
   );
 }

@@ -15,7 +15,12 @@ export interface MarkdownStreamProps
   extends Omit<MarkdownRendererProps, 'ast'>,
     Pick<
       MarkdownStreamOptions,
-      'autoStart' | 'onChunk' | 'onEnd' | 'onError' | 'revealMode' | 'revealDelay'
+      | 'autoStart'
+      | 'onChunk'
+      | 'onEnd'
+      | 'onError'
+      | 'revealMode'
+      | 'revealDelay'
     > {
   source?: MarkdownStreamSource<string>;
   /**
@@ -109,7 +114,10 @@ export function MarkdownStream({
     }
   }, [shouldStop, stream]);
 
-  const ast: Root = useMemo(() => parseMarkdown(stream.content), [stream.content]);
+  const ast: Root = useMemo(
+    () => parseMarkdown(stream.content),
+    [stream.content]
+  );
 
   const themePreference = useMemo(() => {
     if (!textColor && !mutedTextColor) {
@@ -123,14 +131,21 @@ export function MarkdownStream({
     };
   }, [mutedTextColor, textColor, theme]);
 
-  return <MarkdownRenderer {...rendererProps} theme={themePreference} ast={ast} />;
+  return (
+    <MarkdownRenderer {...rendererProps} theme={themePreference} ast={ast} />
+  );
 }
 
 export type {
   MarkdownRendererProps,
   MarkdownRendererComponents,
 } from './renderers/MarkdownRenderer';
-export type { MarkdownTheme, MarkdownThemeConfig, ThemeMode, ThemePreference } from './core/themes';
+export type {
+  MarkdownTheme,
+  MarkdownThemeConfig,
+  ThemeMode,
+  ThemePreference,
+} from './core/themes';
 export type {
   MarkdownStreamOptions,
   MarkdownStreamSource,

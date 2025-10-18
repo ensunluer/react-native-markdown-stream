@@ -1,6 +1,20 @@
-import { Fragment, cloneElement, isValidElement, useMemo, useState } from 'react';
+import {
+  Fragment,
+  cloneElement,
+  isValidElement,
+  useMemo,
+  useState,
+} from 'react';
 import type { ReactNode } from 'react';
-import { Image, Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  Image,
+  Linking,
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import type {
   Blockquote,
   Code,
@@ -19,7 +33,11 @@ import { CodeBlock, type CodeBlockProps } from './CodeBlock';
 import { MathBlock, type MathBlockProps } from './MathBlock';
 import { ImageBlock, type ImageBlockProps } from './ImageBlock';
 import { TextBlock } from './TextBlock';
-import { resolveTheme, type MarkdownTheme, type ThemePreference } from '../core/themes';
+import {
+  resolveTheme,
+  type MarkdownTheme,
+  type ThemePreference,
+} from '../core/themes';
 import { INCOMPLETE_LINK_PLACEHOLDER } from '../core/incomplete-markdown';
 
 export interface MarkdownRendererComponents {
@@ -36,7 +54,10 @@ export interface MarkdownRendererProps {
   components?: MarkdownRendererComponents;
   onLinkPress?: (url: string) => void;
   showCodeLineNumbers?: boolean;
-  onCodeCopy?: (code: { value: string; language?: string | null }) => boolean | void;
+  onCodeCopy?: (code: {
+    value: string;
+    language?: string | null;
+  }) => boolean | void;
   enableCodeCopy?: boolean;
   codeCopyLabel?: string;
   onImagePress?: (image: { url: string; alt?: string }) => boolean | void;
@@ -52,7 +73,19 @@ interface RenderContext {
 
 type InlineNode =
   | TextNode
-  | Extract<Content, { type: 'strong' | 'emphasis' | 'delete' | 'inlineCode' | 'link' | 'break' | 'inlineMath' }>;
+  | Extract<
+      Content,
+      {
+        type:
+          | 'strong'
+          | 'emphasis'
+          | 'delete'
+          | 'inlineCode'
+          | 'link'
+          | 'break'
+          | 'inlineMath';
+      }
+    >;
 
 const INLINE_NODE_TYPES = new Set([
   'text',
@@ -80,10 +113,18 @@ export function MarkdownRenderer({
   blockLongPressDelay = 300,
 }: MarkdownRendererProps) {
   const resolvedTheme = useMemo(() => resolveTheme(theme), [theme]);
-  const [lightboxImage, setLightboxImage] = useState<{ url: string; alt?: string } | null>(null);
-  const [lightboxAspectRatio, setLightboxAspectRatio] = useState<number | undefined>(undefined);
+  const [lightboxImage, setLightboxImage] = useState<{
+    url: string;
+    alt?: string;
+  } | null>(null);
+  const [lightboxAspectRatio, setLightboxAspectRatio] = useState<
+    number | undefined
+  >(undefined);
   const containerStyle = useMemo(() => {
-    if (!resolvedTheme.backgroundColor || resolvedTheme.backgroundColor === 'transparent') {
+    if (
+      !resolvedTheme.backgroundColor ||
+      resolvedTheme.backgroundColor === 'transparent'
+    ) {
       return null;
     }
     return { backgroundColor: resolvedTheme.backgroundColor };
@@ -105,32 +146,61 @@ export function MarkdownRenderer({
     }
   };
 
-  const renderInlineChildren = (parent: Parent, keyPrefix: string): ReactNode[] =>
-    parent.children.map((child, index) => renderInlineNode(child as InlineNode, `${keyPrefix}-${index}`));
+  const renderInlineChildren = (
+    parent: Parent,
+    keyPrefix: string
+  ): ReactNode[] =>
+    parent.children.map((child, index) =>
+      renderInlineNode(child as InlineNode, `${keyPrefix}-${index}`)
+    );
 
   const renderInlineNode = (node: InlineNode, key: string): ReactNode => {
     switch (node.type) {
       case 'text':
         return (
-          <Text key={key} style={[styles.paragraphText, { color: resolvedTheme.textColor }]}>
+          <Text
+            key={key}
+            style={[styles.paragraphText, { color: resolvedTheme.textColor }]}
+          >
             {(node as TextNode).value}
           </Text>
         );
       case 'strong':
         return (
-          <Text key={key} style={[styles.paragraphText, styles.bold, { color: resolvedTheme.textColor }]}>
+          <Text
+            key={key}
+            style={[
+              styles.paragraphText,
+              styles.bold,
+              { color: resolvedTheme.textColor },
+            ]}
+          >
             {renderInlineChildren(node as Parent, key)}
           </Text>
         );
       case 'emphasis':
         return (
-          <Text key={key} style={[styles.paragraphText, styles.italic, { color: resolvedTheme.textColor }]}>
+          <Text
+            key={key}
+            style={[
+              styles.paragraphText,
+              styles.italic,
+              { color: resolvedTheme.textColor },
+            ]}
+          >
             {renderInlineChildren(node as Parent, key)}
           </Text>
         );
       case 'delete':
         return (
-          <Text key={key} style={[styles.paragraphText, styles.strikethrough, { color: resolvedTheme.textColor }]}>
+          <Text
+            key={key}
+            style={[
+              styles.paragraphText,
+              styles.strikethrough,
+              { color: resolvedTheme.textColor },
+            ]}
+          >
             {renderInlineChildren(node as Parent, key)}
           </Text>
         );
@@ -139,7 +209,10 @@ export function MarkdownRenderer({
         if (components?.inlineCode) {
           return (
             <Fragment key={key}>
-              {components.inlineCode({ value: inlineCode.value, theme: resolvedTheme })}
+              {components.inlineCode({
+                value: inlineCode.value,
+                theme: resolvedTheme,
+              })}
             </Fragment>
           );
         }
@@ -164,7 +237,10 @@ export function MarkdownRenderer({
 
         if (isIncompleteLink) {
           return (
-            <Text key={key} style={[styles.paragraphText, { color: resolvedTheme.textColor }]}>
+            <Text
+              key={key}
+              style={[styles.paragraphText, { color: resolvedTheme.textColor }]}
+            >
               {renderInlineChildren(linkNode, key)}
             </Text>
           );
@@ -173,7 +249,11 @@ export function MarkdownRenderer({
         return (
           <Text
             key={key}
-            style={[styles.paragraphText, styles.link, { color: resolvedTheme.linkColor }]}
+            style={[
+              styles.paragraphText,
+              styles.link,
+              { color: resolvedTheme.linkColor },
+            ]}
             onPress={() => {
               void openLink(linkNode.url);
             }}
@@ -184,7 +264,10 @@ export function MarkdownRenderer({
       }
       case 'break':
         return (
-          <Text key={key} style={[styles.paragraphText, { color: resolvedTheme.textColor }]}>
+          <Text
+            key={key}
+            style={[styles.paragraphText, { color: resolvedTheme.textColor }]}
+          >
             {'\n'}
           </Text>
         );
@@ -193,20 +276,30 @@ export function MarkdownRenderer({
         if (components?.mathInline) {
           return (
             <Fragment key={key}>
-              {components.mathInline({ value, inline: true, theme: resolvedTheme })}
+              {components.mathInline({
+                value,
+                inline: true,
+                theme: resolvedTheme,
+              })}
             </Fragment>
           );
         }
-        return <MathBlock key={key} value={value} inline theme={resolvedTheme} />;
+        return (
+          <MathBlock key={key} value={value} inline theme={resolvedTheme} />
+        );
       }
       default:
         return null;
     }
   };
 
-  const renderParagraph = (paragraph: Paragraph, key: string, context?: RenderContext) => {
+  const renderParagraph = (
+    paragraph: Paragraph,
+    key: string,
+    context?: RenderContext
+  ) => {
     const children = renderInlineChildren(paragraph, key).filter(
-      (child): child is ReactNode => child != null && child !== false,
+      (child): child is ReactNode => child != null && child !== false
     );
     const element = (
       <View
@@ -219,10 +312,13 @@ export function MarkdownRenderer({
           isValidElement(child) ? (
             cloneElement(child, { key: `${key}-${index}` })
           ) : (
-            <Text key={`${key}-${index}`} style={{ color: resolvedTheme.textColor }}>
+            <Text
+              key={`${key}-${index}`}
+              style={{ color: resolvedTheme.textColor }}
+            >
               {child as string}
             </Text>
-          ),
+          )
         )}
       </View>
     );
@@ -247,7 +343,14 @@ export function MarkdownRenderer({
 
   const attemptClipboardCopy = (value: string): boolean => {
     try {
-      const maybeNavigator = typeof navigator !== 'undefined' ? (navigator as unknown as { clipboard?: { writeText?: (input: string) => Promise<void> | void } }) : undefined;
+      const maybeNavigator =
+        typeof navigator !== 'undefined'
+          ? (navigator as unknown as {
+              clipboard?: {
+                writeText?: (input: string) => Promise<void> | void;
+              };
+            })
+          : undefined;
       if (maybeNavigator?.clipboard?.writeText) {
         void maybeNavigator.clipboard.writeText(value);
         return true;
@@ -262,7 +365,8 @@ export function MarkdownRenderer({
     const handleCopyPress = () => {
       let handledByUser = false;
       if (onCodeCopy) {
-        handledByUser = onCodeCopy({ value: code.value, language: code.lang }) === true;
+        handledByUser =
+          onCodeCopy({ value: code.value, language: code.lang }) === true;
       }
       if (!handledByUser && enableCodeCopy) {
         handledByUser = attemptClipboardCopy(code.value);
@@ -311,7 +415,9 @@ export function MarkdownRenderer({
         ]}
       >
         {blockquote.children.map((child, index) =>
-          renderNode(child as Content, `${key}-${index}`, { inBlockquote: true }),
+          renderNode(child as Content, `${key}-${index}`, {
+            inBlockquote: true,
+          })
         )}
       </View>
     );
@@ -328,10 +434,18 @@ export function MarkdownRenderer({
           const marker = list.ordered ? `${start + index}.` : '\u2022';
           return (
             <View key={`${key}-${index}`} style={styles.listItem}>
-              <Text style={[styles.listMarker, { color: resolvedTheme.mutedTextColor }]}>{marker}</Text>
+              <Text
+                style={[styles.listMarker, { color: resolvedTheme.textColor }]}
+              >
+                {marker}
+              </Text>
               <View style={styles.listContent}>
                 {(item as ListItem).children.map((child, childIndex) =>
-                  renderNode(child as Content, `${key}-${index}-${childIndex}`, { inList: true }),
+                  renderNode(
+                    child as Content,
+                    `${key}-${index}-${childIndex}`,
+                    { inList: true }
+                  )
                 )}
               </View>
             </View>
@@ -355,7 +469,11 @@ export function MarkdownRenderer({
         Image.getSize(
           image.url,
           (width, height) => {
-            if (Number.isFinite(width) && Number.isFinite(height) && height !== 0) {
+            if (
+              Number.isFinite(width) &&
+              Number.isFinite(height) &&
+              height !== 0
+            ) {
               setLightboxAspectRatio(width / height);
             } else {
               setLightboxAspectRatio(undefined);
@@ -363,7 +481,7 @@ export function MarkdownRenderer({
           },
           () => {
             setLightboxAspectRatio(undefined);
-          },
+          }
         );
       }
     }
@@ -380,8 +498,14 @@ export function MarkdownRenderer({
             url: fallbackUrl,
             alt: image.alt ?? undefined,
             theme: resolvedTheme,
-            onPress: () => handleImagePress({ url: fallbackUrl, alt: image.alt ?? undefined }),
-            onLongPress: onBlockLongPress ? () => onBlockLongPress({ node: image }) : undefined,
+            onPress: () =>
+              handleImagePress({
+                url: fallbackUrl,
+                alt: image.alt ?? undefined,
+              }),
+            onLongPress: onBlockLongPress
+              ? () => onBlockLongPress({ node: image })
+              : undefined,
           })}
         </Fragment>
       );
@@ -393,17 +517,24 @@ export function MarkdownRenderer({
         url={fallbackUrl}
         alt={image.alt ?? undefined}
         theme={resolvedTheme}
-        onPress={fallbackUrl ? (event) => {
-          event.stopPropagation();
-          handleImagePress({ url: fallbackUrl, alt: image.alt ?? undefined });
-        } : undefined}
-          onLongPress={
-            onBlockLongPress
-              ? (event) => {
-                  event.stopPropagation();
-                  onBlockLongPress({ node: image });
-                }
-              : undefined
+        onPress={
+          fallbackUrl
+            ? (event) => {
+                event.stopPropagation();
+                handleImagePress({
+                  url: fallbackUrl,
+                  alt: image.alt ?? undefined,
+                });
+              }
+            : undefined
+        }
+        onLongPress={
+          onBlockLongPress
+            ? (event) => {
+                event.stopPropagation();
+                onBlockLongPress({ node: image });
+              }
+            : undefined
         }
       />
     );
@@ -411,7 +542,11 @@ export function MarkdownRenderer({
     return wrapBlock(image, key, element, false);
   };
 
-  const renderNode = (node: Content, key: string, context?: RenderContext): ReactNode => {
+  const renderNode = (
+    node: Content,
+    key: string,
+    context?: RenderContext
+  ): ReactNode => {
     switch (node.type) {
       case 'paragraph':
         return renderParagraph(node as Paragraph, key, context);
@@ -427,19 +562,32 @@ export function MarkdownRenderer({
         return wrapBlock(
           node,
           key,
-          <View style={[styles.thematicBreak, { backgroundColor: resolvedTheme.codeBorderColor }]} />,
+          <View
+            style={[
+              styles.thematicBreak,
+              { backgroundColor: resolvedTheme.codeBorderColor },
+            ]}
+          />
         );
       case 'math': {
         const value = (node as any).value ?? '';
         if (components?.mathBlock) {
           const element = (
             <Fragment>
-              {components.mathBlock({ value, inline: false, theme: resolvedTheme })}
+              {components.mathBlock({
+                value,
+                inline: false,
+                theme: resolvedTheme,
+              })}
             </Fragment>
           );
           return wrapBlock(node, key, element);
         }
-        return wrapBlock(node, key, <MathBlock value={value} theme={resolvedTheme} />);
+        return wrapBlock(
+          node,
+          key,
+          <MathBlock value={value} theme={resolvedTheme} />
+        );
       }
       case 'image':
         return renderImage(node as MdastImage, key);
@@ -449,19 +597,26 @@ export function MarkdownRenderer({
         return wrapBlock(
           node,
           key,
-          <TextBlock style={[styles.tableFallback, { color: resolvedTheme.mutedTextColor }]}>
+          <TextBlock
+            style={[
+              styles.tableFallback,
+              { color: resolvedTheme.mutedTextColor },
+            ]}
+          >
             {'[Table rendering is not supported in this version]'}
-          </TextBlock>,
+          </TextBlock>
         );
       default:
         if (INLINE_NODE_TYPES.has(node.type)) {
           return wrapBlock(
             node,
             key,
-            <TextBlock style={[styles.paragraph, { color: resolvedTheme.textColor }]}>
+            <TextBlock
+              style={[styles.paragraph, { color: resolvedTheme.textColor }]}
+            >
               {renderInlineNode(node as InlineNode, key)}
             </TextBlock>,
-            false,
+            false
           );
         }
         return null;
@@ -472,7 +627,7 @@ export function MarkdownRenderer({
     node: Content | { type: string },
     key: string,
     element: ReactNode,
-    allowLongPress: boolean = true,
+    allowLongPress: boolean = true
   ): ReactNode {
     if (element == null) {
       return null;
@@ -519,34 +674,59 @@ export function MarkdownRenderer({
     setLightboxAspectRatio(undefined);
   };
 
-  const lightbox = enableImageLightbox && lightboxImage ? (
-    <Modal transparent animationType="fade" visible onRequestClose={closeLightbox}>
-      <Pressable style={styles.lightboxBackdrop} onPress={closeLightbox}>
-        <View style={styles.lightboxContent}>
-          <Text style={[styles.lightboxHint, { color: resolvedTheme.mutedTextColor }]}>Tap to close</Text>
-          <View style={styles.lightboxImageWrapper}>
-            <Image
-              source={{ uri: lightboxImage.url }}
-              resizeMode="contain"
-              style={[styles.lightboxImage, lightboxAspectRatio ? { aspectRatio: lightboxAspectRatio } : null]}
-              accessible
-              accessibilityLabel={lightboxImage.alt}
-            />
-            {lightboxImage.alt ? (
-              <Text style={[styles.lightboxCaption, { color: resolvedTheme.mutedTextColor }]}>
-                {lightboxImage.alt}
-              </Text>
-            ) : null}
+  const lightbox =
+    enableImageLightbox && lightboxImage ? (
+      <Modal
+        transparent
+        animationType="fade"
+        visible
+        onRequestClose={closeLightbox}
+      >
+        <Pressable style={styles.lightboxBackdrop} onPress={closeLightbox}>
+          <View style={styles.lightboxContent}>
+            <Text
+              style={[
+                styles.lightboxHint,
+                { color: resolvedTheme.mutedTextColor },
+              ]}
+            >
+              Tap to close
+            </Text>
+            <View style={styles.lightboxImageWrapper}>
+              <Image
+                source={{ uri: lightboxImage.url }}
+                resizeMode="contain"
+                style={[
+                  styles.lightboxImage,
+                  lightboxAspectRatio
+                    ? { aspectRatio: lightboxAspectRatio }
+                    : null,
+                ]}
+                accessible
+                accessibilityLabel={lightboxImage.alt}
+              />
+              {lightboxImage.alt ? (
+                <Text
+                  style={[
+                    styles.lightboxCaption,
+                    { color: resolvedTheme.mutedTextColor },
+                  ]}
+                >
+                  {lightboxImage.alt}
+                </Text>
+              ) : null}
+            </View>
           </View>
-        </View>
-      </Pressable>
-    </Modal>
-  ) : null;
+        </Pressable>
+      </Modal>
+    ) : null;
 
   return (
     <Fragment>
       <View style={[styles.container, containerStyle]}>
-        {ast.children.map((node, index) => renderNode(node as Content, `block-${index}`))}
+        {ast.children.map((node, index) =>
+          renderNode(node as Content, `block-${index}`)
+        )}
       </View>
       {lightbox}
     </Fragment>
@@ -562,7 +742,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     flexDirection: 'row',
     flexWrap: 'wrap',
-    alignItems: 'baseline',
+    alignItems: 'flex-start',
   },
   paragraphText: {
     fontSize: 16,
@@ -644,9 +824,11 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   listMarker: {
-    width: 24,
+    width: 18,
+    marginRight: 8,
     fontSize: 16,
     lineHeight: 22,
+    textAlign: 'left',
   },
   listContent: {
     flex: 1,

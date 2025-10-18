@@ -68,7 +68,7 @@ export function ImageBlock({
           return;
         }
         setAspectRatio(undefined);
-      },
+      }
     );
 
     return () => {
@@ -79,7 +79,12 @@ export function ImageBlock({
   const content = useMemo(() => {
     if (!url) {
       return (
-        <View style={[styles.fallbackContainer, { borderColor: theme.codeBorderColor }]}>
+        <View
+          style={[
+            styles.fallbackContainer,
+            { borderColor: theme.codeBorderColor },
+          ]}
+        >
           <Text style={[styles.fallbackText, { color: theme.mutedTextColor }]}>
             {alt ? `![${alt}]` : '[Image unavailable]'}
           </Text>
@@ -114,28 +119,57 @@ export function ImageBlock({
           </View>
         ) : null}
         {state === 'error' ? (
-          <View style={[styles.overlay, styles.errorOverlay, { borderColor: theme.codeBorderColor }]}>
-            <Text style={[styles.fallbackText, { color: theme.mutedTextColor }]}>
+          <View
+            style={[
+              styles.overlay,
+              styles.errorOverlay,
+              { borderColor: theme.codeBorderColor },
+            ]}
+          >
+            <Text
+              style={[styles.fallbackText, { color: theme.mutedTextColor }]}
+            >
               {alt ? `Unable to load ${alt}` : 'Unable to load image'}
             </Text>
           </View>
         ) : null}
       </View>
     );
-  }, [alt, aspectRatio, imageStyle, state, theme.codeBorderColor, theme.linkColor, theme.mutedTextColor, url]);
+  }, [
+    alt,
+    aspectRatio,
+    imageStyle,
+    state,
+    theme.codeBorderColor,
+    theme.linkColor,
+    theme.mutedTextColor,
+    url,
+  ]);
 
   const figure = (
     <View style={[styles.container, containerStyle]}>
       {content}
       {showCaption && alt ? (
-        <Text style={[styles.caption, { color: theme.mutedTextColor }, captionStyle]}>{alt}</Text>
+        <Text
+          style={[
+            styles.caption,
+            { color: theme.mutedTextColor },
+            captionStyle,
+          ]}
+        >
+          {alt}
+        </Text>
       ) : null}
     </View>
   );
 
   if (onPress || onLongPress) {
     return (
-      <Pressable onPress={onPress} onLongPress={onLongPress} style={styles.pressable}>
+      <Pressable
+        onPress={onPress}
+        onLongPress={onLongPress}
+        style={styles.pressable}
+      >
         {figure}
       </Pressable>
     );

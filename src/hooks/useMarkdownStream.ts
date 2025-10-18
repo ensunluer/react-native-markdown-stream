@@ -13,7 +13,10 @@ type ReadableStreamLike<T> = {
 export type MarkdownStreamSource<T = unknown> =
   | AsyncIterable<T>
   | Iterable<T>
-  | (() => AsyncIterable<T> | Iterable<T> | Promise<AsyncIterable<T> | Iterable<T>>)
+  | (() =>
+      | AsyncIterable<T>
+      | Iterable<T>
+      | Promise<AsyncIterable<T> | Iterable<T>>)
   | ReadableStreamLike<T>;
 
 export type RevealMode = 'chunk' | 'word' | 'character';
@@ -45,11 +48,14 @@ export interface UseMarkdownStreamResult {
 type AsyncOrSyncIterable<T> = AsyncIterable<T> | Iterable<T>;
 type ResolvedSource<T> = AsyncOrSyncIterable<T> | ReadableStreamLike<T>;
 
-const textDecoder = typeof TextDecoder !== 'undefined' ? new TextDecoder() : undefined;
+const textDecoder =
+  typeof TextDecoder !== 'undefined' ? new TextDecoder() : undefined;
 const DEFAULT_REVEAL_DELAY = 28;
 
 function isAsyncIterable<T>(value: unknown): value is AsyncIterable<T> {
-  return typeof (value as AsyncIterable<T>)?.[Symbol.asyncIterator] === 'function';
+  return (
+    typeof (value as AsyncIterable<T>)?.[Symbol.asyncIterator] === 'function'
+  );
 }
 
 function isIterable<T>(value: unknown): value is Iterable<T> {
@@ -57,7 +63,11 @@ function isIterable<T>(value: unknown): value is Iterable<T> {
 }
 
 function isReadableStream<T>(value: unknown): value is ReadableStreamLike<T> {
-  return typeof value === 'object' && value !== null && typeof (value as ReadableStreamLike<T>).getReader === 'function';
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    typeof (value as ReadableStreamLike<T>).getReader === 'function'
+  );
 }
 
 function normalizeChunk(chunk: unknown): string {
@@ -85,7 +95,9 @@ function normalizeChunk(chunk: unknown): string {
   return String(chunk);
 }
 
-async function resolveSource<T>(source: MarkdownStreamSource<T>): Promise<ResolvedSource<T>> {
+async function resolveSource<T>(
+  source: MarkdownStreamSource<T>
+): Promise<ResolvedSource<T>> {
   if (typeof source === 'function') {
     const result = source();
     return Promise.resolve(result);
@@ -94,7 +106,9 @@ async function resolveSource<T>(source: MarkdownStreamSource<T>): Promise<Resolv
   return source;
 }
 
-async function* toAsyncIterable<T>(source: MarkdownStreamSource<T>): AsyncGenerator<string> {
+async function* toAsyncIterable<T>(
+  source: MarkdownStreamSource<T>
+): AsyncGenerator<string> {
   const resolved = await resolveSource(source);
 
   if (isReadableStream(resolved)) {
@@ -228,7 +242,7 @@ export function useMarkdownStream<T = string>({
     () => () => {
       clearRevealTimer();
     },
-    [clearRevealTimer],
+    [clearRevealTimer]
   );
 
   const startRevealLoop = useCallback(() => {
@@ -264,7 +278,7 @@ export function useMarkdownStream<T = string>({
       pendingTokensRef.current.push(...tokens);
       startRevealLoop();
     },
-    [startRevealLoop],
+    [startRevealLoop]
   );
 
   const stop = useCallback(() => {
@@ -297,7 +311,7 @@ export function useMarkdownStream<T = string>({
 
       callbacksRef.current.onChunk?.(chunk);
     },
-    [appendTokens, flushRevealQueue],
+    [appendTokens, flushRevealQueue]
   );
 
   const setContentDirect = useCallback(
@@ -307,7 +321,7 @@ export function useMarkdownStream<T = string>({
       flushRevealQueue();
       setContent(value);
     },
-    [flushRevealQueue],
+    [flushRevealQueue]
   );
 
   const reset = useCallback(() => {
@@ -324,7 +338,8 @@ export function useMarkdownStream<T = string>({
 
   const start = useCallback(
     async (overrideSource?: MarkdownStreamSource) => {
-      const activeSource = (overrideSource as MarkdownStreamSource<T>) ?? sourceRef.current;
+      const activeSource =
+        (overrideSource as MarkdownStreamSource<T>) ?? sourceRef.current;
       if (!activeSource) {
         return;
       }
@@ -357,7 +372,7 @@ export function useMarkdownStream<T = string>({
         setIsStreaming(false);
       }
     },
-    [appendChunk, stop],
+    [appendChunk, stop]
   );
 
   useEffect(() => {
@@ -368,13 +383,16 @@ export function useMarkdownStream<T = string>({
     return () => stop();
   }, [autoStart, source, start, stop]);
 
-  const setRevealMode = useCallback((mode: RevealMode) => {
-    revealModeRef.current = mode;
-    if (mode === 'chunk') {
-      flushRevealQueue();
-      setContent(bufferRef.current.value);
-    }
-  }, [flushRevealQueue]);
+  const setRevealMode = useCallback(
+    (mode: RevealMode) => {
+      revealModeRef.current = mode;
+      if (mode === 'chunk') {
+        flushRevealQueue();
+        setContent(bufferRef.current.value);
+      }
+    },
+    [flushRevealQueue]
+  );
 
   const setRevealDelay = useCallback((delay: number) => {
     revealDelayRef.current = clampDelay(delay);
@@ -404,6 +422,6 @@ export function useMarkdownStream<T = string>({
       setRevealMode,
       start,
       stop,
-    ],
+    ]
   );
 }
