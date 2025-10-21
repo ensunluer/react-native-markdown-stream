@@ -69,4 +69,5 @@ jobs:
 
       - name: Build example for Web
         run: |
-          yarn example expo export --platform web
+          cd example
+          yarn build-web
