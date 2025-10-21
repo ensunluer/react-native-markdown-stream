@@ -54,31 +54,40 @@ if (fs.existsSync(faviconPath)) {
   fs.copyFileSync(faviconPath, publicFaviconPath);
 }
 
-const serve = spawn('npx', ['serve', 'public', '-p', '8081'], {
-  cwd: projectRoot,
-  stdio: 'inherit',
-  shell: true,
-});
+// Check if we should start server (only in interactive mode)
+const shouldServe =
+  process.env.NODE_ENV !== 'production' && process.env.CI !== 'true';
 
-serve.on('error', (err) => {
-  console.error('Failed to start server:', err);
-  process.exit(1);
-});
+if (shouldServe) {
+  const serve = spawn('npx', ['serve', 'public', '-p', '8081'], {
+    cwd: projectRoot,
+    stdio: 'inherit',
+    shell: true,
+  });
 
-serve.on('exit', (code) => {
-  console.log(`Server exited with code ${code}`);
-});
+  serve.on('error', (err) => {
+    console.error('Failed to start server:', err);
+    process.exit(1);
+  });
 
-process.on('SIGINT', () => {
-  console.log('\nStopping server...');
-  serve.kill('SIGINT');
-  process.exit(0);
-});
+  serve.on('exit', (code) => {
+    console.log(`Server exited with code ${code}`);
+  });
 
-process.on('SIGTERM', () => {
-  console.log('\nStopping server...');
-  serve.kill('SIGTERM');
-  process.exit(0);
-});
+  process.on('SIGINT', () => {
+    console.log('\nStopping server...');
+    serve.kill('SIGINT');
+    process.exit(0);
+  });
 
-console.log('Server started at http://localhost:8081');
+  process.on('SIGTERM', () => {
+    console.log('\nStopping server...');
+    serve.kill('SIGTERM');
+    process.exit(0);
+  });
+
+  console.log('Server started at http://localhost:8081');
+} else {
+  console.log('Build completed successfully!');
+  console.log('Files are ready in public/ directory');
+}

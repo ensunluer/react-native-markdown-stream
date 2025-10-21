@@ -70,4 +70,4 @@ jobs:
       - name: Build example for Web
         run: |
           cd example
-          yarn build-web
+          yarn build
