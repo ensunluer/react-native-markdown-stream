@@ -69,7 +69,18 @@ const STREAM_CHUNKS = [
     '  - Nested item\n' +
     '    - With `inline code`\n' +
     '    - ~~Optional strikethrough~~\n\n',
-  '```bash\n' +
+  '- Ordered list example:\n' +
+    '  1. First item\n' +
+    '  2. Second item\n' +
+    '  3. Third item\n\n' +
+    '  4. Fourth item\n\n' +
+    '  5. Fifth item\n\n' +
+    '  6. Sixth item\n\n' +
+    '  7. Seventh item\n\n' +
+    '  8. Eighth item\n\n' +
+    '  9. Ninth item\n\n' +
+    '  10. Tenth item\n\n' +
+    '```bash\n' +
     'curl https://api.example.com/chat-stream \\\n' +
     "  -H 'Accept: text/event-stream'\n" +
     '  -H "Authorization: Bearer $TOKEN"\n' +
