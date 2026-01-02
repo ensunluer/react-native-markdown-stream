@@ -427,6 +427,25 @@ export function MarkdownRenderer({
 
   const renderList = (list: List, key: string) => {
     const start = list.start ?? 1;
+    const markerStyle = list.ordered
+      ? styles.listOrderedMarker
+      : styles.listMarker;
+
+    const markerWidth = (() => {
+      const { length } = list.children;
+
+      // Adjust ordered list marker width based on list length
+      if (list.ordered) {
+        if (length < 10) {
+          return 16;
+        }
+        if (length < 100) {
+          return 28;
+        }
+        return 32;
+      }
+      return 16;
+    })();
 
     const element = (
       <View style={styles.listContainer}>
@@ -435,7 +454,10 @@ export function MarkdownRenderer({
           return (
             <View key={`${key}-${index}`} style={styles.listItem}>
               <Text
-                style={[styles.listMarker, { color: resolvedTheme.textColor }]}
+                style={[
+                  markerStyle,
+                  { color: resolvedTheme.textColor, width: markerWidth },
+                ]}
               >
                 {marker}
               </Text>
@@ -824,11 +846,17 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   listMarker: {
-    width: 18,
-    marginRight: 8,
     fontSize: 16,
     lineHeight: 22,
     textAlign: 'left',
+  },
+  listOrderedMarker: {
+    marginRight: 6,
+    fontSize: 16,
+    lineHeight: 22,
+    textAlign: 'right',
+    fontWeight: '700',
+    fontVariant: ['tabular-nums', 'lining-nums'],
   },
   listContent: {
     flex: 1,
