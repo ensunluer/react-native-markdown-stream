@@ -80,25 +80,42 @@ function calculateColumnWidths(
     return [];
   }
 
-  // Estimate natural widths from character counts, capped at MAX_COLUMN_WIDTH
-  const estimatedWidths = charCounts.map((count) =>
+  // First column: use natural width (minimum needed for content)
+  const firstColumnWidth = Math.min(
+    MAX_COLUMN_WIDTH,
+    Math.max(MIN_COLUMN_WIDTH, (charCounts[0] ?? 0) * CHAR_WIDTH_ESTIMATE)
+  );
+
+  if (charCounts.length === 1) {
+    return [firstColumnWidth];
+  }
+
+  // Remaining columns: estimate natural widths
+  const remainingCharCounts = charCounts.slice(1);
+  const remainingEstimatedWidths = remainingCharCounts.map((count) =>
     Math.min(
       MAX_COLUMN_WIDTH,
       Math.max(MIN_COLUMN_WIDTH, count * CHAR_WIDTH_ESTIMATE)
     )
   );
 
-  const totalEstimatedWidth = estimatedWidths.reduce((sum, w) => sum + w, 0);
+  const remainingWidth = tableWidth - firstColumnWidth;
+  const totalRemainingEstimated = remainingEstimatedWidths.reduce(
+    (sum, w) => sum + w,
+    0
+  );
 
-  // If content fits within tableWidth, scale up proportionally to fill space
-  // (this may push columns above MAX_COLUMN_WIDTH, which is intentional)
-  if (totalEstimatedWidth <= tableWidth) {
-    const scaleFactor = tableWidth / totalEstimatedWidth;
-    return estimatedWidths.map((w) => w * scaleFactor);
+  // Scale remaining columns to fill available space (if they fit)
+  let finalRemainingWidths: number[];
+  if (totalRemainingEstimated <= remainingWidth) {
+    const scaleFactor = remainingWidth / totalRemainingEstimated;
+    finalRemainingWidths = remainingEstimatedWidths.map((w) => w * scaleFactor);
+  } else {
+    // Content overflows, use natural widths (table will scroll)
+    finalRemainingWidths = remainingEstimatedWidths;
   }
 
-  // If content overflows, use capped estimated widths (table will scroll)
-  return estimatedWidths;
+  return [firstColumnWidth, ...finalRemainingWidths];
 }
 
 function TableCellBlock({
