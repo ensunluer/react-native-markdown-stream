@@ -8,6 +8,7 @@ export interface MarkdownTheme {
   codeTextColor: string;
   quoteBorderColor: string;
   quoteBackgroundColor: string;
+  tableBorderColor: string;
 }
 
 export type ThemeMode = 'light' | 'dark';
@@ -36,6 +37,7 @@ export const lightTheme: MarkdownTheme = {
   codeTextColor: '#111827',
   quoteBorderColor: '#D1D5DB',
   quoteBackgroundColor: '#F9FAFB',
+  tableBorderColor: '#E5E7EB',
 };
 
 export const darkTheme: MarkdownTheme = {
@@ -48,6 +50,7 @@ export const darkTheme: MarkdownTheme = {
   codeTextColor: '#F9FAFB',
   quoteBorderColor: '#374151',
   quoteBackgroundColor: '#111827',
+  tableBorderColor: '#374151',
 };
 
 const THEME_KEYS: Array<keyof MarkdownTheme> = [
@@ -60,6 +63,7 @@ const THEME_KEYS: Array<keyof MarkdownTheme> = [
   'codeTextColor',
   'quoteBorderColor',
   'quoteBackgroundColor',
+  'tableBorderColor',
 ];
 
 function isMarkdownTheme(value: unknown): value is MarkdownTheme {
@@ -124,7 +128,7 @@ export function resolveTheme(
     return mergeThemes(lightTheme, theme);
   }
 
-  const { base, colors, ...directOverrides } = theme as MarkdownThemeConfig;
+  const { base, colors, ...directOverrides } = theme;
   const baseTheme = resolveBaseTheme(base);
   const combinedOverrides: Partial<MarkdownTheme> = {
     ...colors,
