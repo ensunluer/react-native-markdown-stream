@@ -57,7 +57,7 @@ function getTextContent(node: Node): string {
 }
 
 // Get max character count for each column
-function getColumnCharCounts(rows: TableRow[]): number[] {
+function getMaxColumnCharCounts(rows: TableRow[]): number[] {
   const counts: number[] = [];
 
   for (const row of rows) {
@@ -73,25 +73,28 @@ function getColumnCharCounts(rows: TableRow[]): number[] {
 }
 
 function calculateColumnWidths(
-  charCounts: number[],
+  maxCharCountsByColumn: number[],
   tableWidth: number
 ): number[] {
-  if (charCounts.length === 0 || tableWidth === 0) {
+  if (maxCharCountsByColumn.length === 0 || tableWidth === 0) {
     return [];
   }
 
   // First column: use natural width (minimum needed for content)
   const firstColumnWidth = Math.min(
     MAX_COLUMN_WIDTH,
-    Math.max(MIN_COLUMN_WIDTH, (charCounts[0] ?? 0) * CHAR_WIDTH_ESTIMATE)
+    Math.max(
+      MIN_COLUMN_WIDTH,
+      (maxCharCountsByColumn[0] ?? 0) * CHAR_WIDTH_ESTIMATE
+    )
   );
 
-  if (charCounts.length === 1) {
+  if (maxCharCountsByColumn.length === 1) {
     return [firstColumnWidth];
   }
 
   // Remaining columns: estimate natural widths
-  const remainingCharCounts = charCounts.slice(1);
+  const remainingCharCounts = maxCharCountsByColumn.slice(1);
   const remainingEstimatedWidths = remainingCharCounts.map((count) =>
     Math.min(
       MAX_COLUMN_WIDTH,
@@ -251,13 +254,15 @@ export function TableBlock({
     [rows]
   );
 
-  // Calculate column widths based on character counts (no render needed)
-  const charCounts = useMemo(() => getColumnCharCounts(rows), [rows]);
+  const maxCharCountByColumn = useMemo(
+    () => getMaxColumnCharCounts(rows),
+    [rows]
+  );
 
   const columnWidths = useMemo(() => {
     if (tableWidth === 0) return [];
-    return calculateColumnWidths(charCounts, tableWidth);
-  }, [charCounts, tableWidth]);
+    return calculateColumnWidths(maxCharCountByColumn, tableWidth);
+  }, [maxCharCountByColumn, tableWidth]);
 
   const isWidthReady = tableWidth > 0 && columnWidths.length === columnCount;
   const isHeightReady = rowHeights.size === rows.length;
