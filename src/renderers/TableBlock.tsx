@@ -2,6 +2,7 @@ import {
   cloneElement,
   isValidElement,
   useCallback,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
@@ -14,7 +15,7 @@ import {
   type LayoutChangeEvent,
 } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
-import type { Parent } from 'unist';
+import type { Node, Parent } from 'unist';
 import type { TableCell, TableRow } from 'mdast';
 import type { MarkdownTheme } from '../core/themes';
 
@@ -26,13 +27,10 @@ export interface TableBlockProps {
   renderInlineChildren: (parent: Parent, keyPrefix: string) => ReactNode[];
 }
 
-const MIN_CELL_WIDTH = 80;
-const MIN_CELL_HEIGHT = 36;
-
-interface CellDimensions {
-  width: number;
-  height: number;
-}
+const MIN_COLUMN_WIDTH = 60;
+const CHAR_WIDTH_ESTIMATE = 5; // Approximate pixels per character
+// Max column width based on Tailwind's prose width (~65ch)
+const MAX_COLUMN_WIDTH = 65 * CHAR_WIDTH_ESTIMATE; // 325px
 
 const getAlignItems = (
   textAlign: 'left' | 'center' | 'right'
@@ -47,6 +45,62 @@ const getAlignItems = (
   }
 };
 
+// Extract text content from mdast node recursively
+function getTextContent(node: Node): string {
+  if ('value' in node && typeof node.value === 'string') {
+    return node.value;
+  }
+  if ('children' in node && Array.isArray(node.children)) {
+    return node.children.map((child) => getTextContent(child as Node)).join('');
+  }
+  return '';
+}
+
+// Get max character count for each column
+function getColumnCharCounts(rows: TableRow[]): number[] {
+  const counts: number[] = [];
+
+  for (const row of rows) {
+    for (let colIdx = 0; colIdx < row.children.length; colIdx++) {
+      const cell = row.children[colIdx];
+      if (!cell) continue;
+      const charCount = getTextContent(cell).length;
+      counts[colIdx] = Math.max(counts[colIdx] ?? 0, charCount);
+    }
+  }
+
+  return counts;
+}
+
+function calculateColumnWidths(
+  charCounts: number[],
+  tableWidth: number
+): number[] {
+  if (charCounts.length === 0 || tableWidth === 0) {
+    return [];
+  }
+
+  // Estimate natural widths from character counts, capped at MAX_COLUMN_WIDTH
+  const estimatedWidths = charCounts.map((count) =>
+    Math.min(
+      MAX_COLUMN_WIDTH,
+      Math.max(MIN_COLUMN_WIDTH, count * CHAR_WIDTH_ESTIMATE)
+    )
+  );
+
+  const totalEstimatedWidth = estimatedWidths.reduce((sum, w) => sum + w, 0);
+
+  // If content fits within tableWidth, scale up proportionally to fill space
+  // (this may push columns above MAX_COLUMN_WIDTH, which is intentional)
+  if (totalEstimatedWidth <= tableWidth) {
+    const scaleFactor = tableWidth / totalEstimatedWidth;
+    return estimatedWidths.map((w) => w * scaleFactor);
+  }
+
+  // If content overflows, use capped estimated widths (table will scroll)
+  return estimatedWidths;
+}
+
 function TableCellBlock({
   cell,
   cellKey,
@@ -56,7 +110,7 @@ function TableCellBlock({
   renderInlineChildren,
   width,
   height,
-  onLayout,
+  onContentLayout,
 }: {
   cell: TableCell;
   cellKey: string;
@@ -66,7 +120,7 @@ function TableCellBlock({
   renderInlineChildren: (parent: Parent, keyPrefix: string) => ReactNode[];
   width: number | undefined;
   height: number | undefined;
-  onLayout: (event: LayoutChangeEvent) => void;
+  onContentLayout: (event: LayoutChangeEvent) => void;
 }) {
   const children = renderInlineChildren(cell, cellKey).filter(
     (child): child is ReactNode => child != null && child !== false
@@ -76,31 +130,32 @@ function TableCellBlock({
 
   return (
     <View
-      onLayout={onLayout}
       style={[
         styles.tableCell,
         {
           borderColor: theme.tableBorderColor,
           alignItems: getAlignItems(textAlign),
         },
-        width !== undefined ? { width } : { minWidth: MIN_CELL_WIDTH },
-        height !== undefined ? { height } : { minHeight: MIN_CELL_HEIGHT },
+        width !== undefined ? { width } : {},
+        height !== undefined ? { height } : {},
       ]}
     >
-      <Text
-        style={[
-          isHeader ? styles.tableHeaderText : styles.tableCellText,
-          { color: theme.textColor },
-        ]}
-      >
-        {children.map((child, index) =>
-          isValidElement(child) ? (
-            cloneElement(child, { key: `${cellKey}-${index}` })
-          ) : (
-            <Text key={`${cellKey}-${index}`}>{child as string}</Text>
-          )
-        )}
-      </Text>
+      <View onLayout={onContentLayout} style={styles.cellContentMeasure}>
+        <Text
+          style={[
+            isHeader ? styles.tableHeaderText : styles.tableCellText,
+            { color: theme.textColor },
+          ]}
+        >
+          {children.map((child, index) =>
+            isValidElement(child) ? (
+              cloneElement(child, { key: `${cellKey}-${index}` })
+            ) : (
+              <Text key={`${cellKey}-${index}`}>{String(child)}</Text>
+            )
+          )}
+        </Text>
+      </View>
     </View>
   );
 }
@@ -122,12 +177,7 @@ function TableColumn({
   renderInlineChildren: (parent: Parent, keyPrefix: string) => ReactNode[];
   columnWidth: number | undefined;
   rowHeights: Map<number, number>;
-  onCellLayout: (
-    columnIndex: number,
-    rowIndex: number,
-    width: number,
-    height: number
-  ) => void;
+  onCellLayout: (rowIndex: number, height: number) => void;
 }) {
   return (
     <View style={styles.column}>
@@ -157,13 +207,8 @@ function TableColumn({
               renderInlineChildren={renderInlineChildren}
               width={columnWidth}
               height={height}
-              onLayout={(e) =>
-                onCellLayout(
-                  columnIndex,
-                  rowIndex,
-                  e.nativeEvent.layout.width,
-                  e.nativeEvent.layout.height
-                )
+              onContentLayout={(e) =>
+                onCellLayout(rowIndex, e.nativeEvent.layout.height)
               }
             />
           </View>
@@ -180,63 +225,66 @@ export function TableBlock({
   containerStyle,
   renderInlineChildren,
 }: TableBlockProps) {
-  const [columnWidths, setColumnWidths] = useState<Map<number, number>>(
-    new Map()
-  );
+  const [tableWidth, setTableWidth] = useState(0);
   const [rowHeights, setRowHeights] = useState<Map<number, number>>(new Map());
-  const measurementsRef = useRef<Map<string, CellDimensions>>(new Map());
-  const [isMeasured, setIsMeasured] = useState(false);
+  const heightMeasurementsRef = useRef<Map<string, number>>(new Map());
+
+  const columnCount = useMemo(
+    () => Math.max(...rows.map((row) => row.children.length), 0),
+    [rows]
+  );
+
+  // Calculate column widths based on character counts (no render needed)
+  const charCounts = useMemo(() => getColumnCharCounts(rows), [rows]);
+
+  const columnWidths = useMemo(() => {
+    if (tableWidth === 0) return [];
+    return calculateColumnWidths(charCounts, tableWidth);
+  }, [charCounts, tableWidth]);
+
+  const isWidthReady = tableWidth > 0 && columnWidths.length === columnCount;
+  const isHeightReady = rowHeights.size === rows.length;
+
+  const handleTableLayout = useCallback((e: LayoutChangeEvent) => {
+    const width = e.nativeEvent.layout.width;
+    setTableWidth((prev) => (prev !== width ? width : prev));
+  }, []);
 
   const handleCellLayout = useCallback(
-    (columnIndex: number, rowIndex: number, width: number, height: number) => {
+    (columnIndex: number, rowIndex: number, height: number) => {
       const key = `${columnIndex}-${rowIndex}`;
-      const current = measurementsRef.current.get(key);
+      const current = heightMeasurementsRef.current.get(key);
 
-      if (current?.width === width && current?.height === height) return;
+      if (current === height) return;
 
-      measurementsRef.current.set(key, { width, height });
+      heightMeasurementsRef.current.set(key, height);
 
-      // Calculate max width per column and max height per row
-      const newColumnWidths = new Map<number, number>();
+      // Calculate max height per row
       const newRowHeights = new Map<number, number>();
 
-      measurementsRef.current.forEach((dims, k) => {
-        const parts = k.split('-');
-        const colIdx = parseInt(parts[0] ?? '0', 10);
-        const rowIdx = parseInt(parts[1] ?? '0', 10);
-
-        const existingWidth = newColumnWidths.get(colIdx) ?? 0;
-        newColumnWidths.set(colIdx, Math.max(existingWidth, dims.width));
-
-        const existingHeight = newRowHeights.get(rowIdx) ?? 0;
-        newRowHeights.set(rowIdx, Math.max(existingHeight, dims.height));
+      heightMeasurementsRef.current.forEach((h, k) => {
+        const rowIdx = parseInt(k.split('-')[1] ?? '0', 10);
+        const existing = newRowHeights.get(rowIdx) ?? 0;
+        newRowHeights.set(rowIdx, Math.max(existing, h));
       });
 
       // Check if anything changed
       let hasChanges = false;
-
-      newColumnWidths.forEach((w, colIdx) => {
-        if (columnWidths.get(colIdx) !== w) hasChanges = true;
-      });
-
       newRowHeights.forEach((h, rowIdx) => {
         if (rowHeights.get(rowIdx) !== h) hasChanges = true;
       });
 
       if (hasChanges) {
-        setColumnWidths(newColumnWidths);
         setRowHeights(newRowHeights);
-        setIsMeasured(true);
       }
     },
-    [columnWidths, rowHeights]
+    [rowHeights]
   );
 
   if (rows.length === 0) {
     return null;
   }
 
-  const columnCount = Math.max(...rows.map((row) => row.children.length));
   const scrollableColumnIndices = Array.from(
     { length: columnCount - 1 },
     (_, i) => i + 1
@@ -244,6 +292,7 @@ export function TableBlock({
 
   return (
     <View
+      onLayout={handleTableLayout}
       style={[
         styles.tableContainer,
         { borderColor: theme.tableBorderColor },
@@ -258,9 +307,11 @@ export function TableBlock({
           alignment={alignments[0] ?? null}
           theme={theme}
           renderInlineChildren={renderInlineChildren}
-          columnWidth={isMeasured ? columnWidths.get(0) : undefined}
-          rowHeights={isMeasured ? rowHeights : new Map()}
-          onCellLayout={handleCellLayout}
+          columnWidth={isWidthReady ? columnWidths[0] : undefined}
+          rowHeights={isHeightReady ? rowHeights : new Map()}
+          onCellLayout={(rowIndex, height) =>
+            handleCellLayout(0, rowIndex, height)
+          }
         />
 
         {/* Scrollable columns */}
@@ -280,10 +331,12 @@ export function TableBlock({
                 theme={theme}
                 renderInlineChildren={renderInlineChildren}
                 columnWidth={
-                  isMeasured ? columnWidths.get(columnIndex) : undefined
+                  isWidthReady ? columnWidths[columnIndex] : undefined
                 }
-                rowHeights={isMeasured ? rowHeights : new Map()}
-                onCellLayout={handleCellLayout}
+                rowHeights={isHeightReady ? rowHeights : new Map()}
+                onCellLayout={(rowIndex, height) =>
+                  handleCellLayout(columnIndex, rowIndex, height)
+                }
               />
             ))}
           </ScrollView>
@@ -313,14 +366,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
   },
   tableCell: {
-    padding: 8,
     borderRightWidth: 1,
     borderBottomWidth: 1,
+    overflow: 'hidden',
   },
-  tableCellContent: {
+  cellContentMeasure: {
     padding: 8,
-    flexDirection: 'row',
-    flexWrap: 'wrap',
   },
   tableCellText: {
     fontSize: 14,
