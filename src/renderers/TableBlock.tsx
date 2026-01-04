@@ -29,12 +29,10 @@ export interface TableBlockProps {
 
 const FONT_SIZE = 14;
 const CHAR_WIDTH_ESTIMATE = FONT_SIZE * 0.7; // Assume em width is 70% of font size
-const MIN_COLUMN_WIDTH = 60;
 
 const CELL_PADDING = 8; // 8px on each side
 const WIDTH_BUFFER = 1.1; // 10% buffer for font variations
-// Max column width based on Tailwind's prose width (~65ch)
-const MAX_COLUMN_WIDTH = 65 * CHAR_WIDTH_ESTIMATE; // 520px
+const MAX_COLUMN_WIDTH = 35 * CHAR_WIDTH_ESTIMATE;
 
 const getAlignItems = (
   textAlign: 'left' | 'center' | 'right'
@@ -76,6 +74,17 @@ function getMaxColumnCharCounts(rows: TableRow[]): number[] {
   return counts;
 }
 
+/**
+ *  Calculate the width for a single column based on the character count.
+ */
+function calculateSingleColumnWidth(longestCellCharCount: number): number {
+  const naturalWidth =
+    longestCellCharCount * CHAR_WIDTH_ESTIMATE * WIDTH_BUFFER +
+    CELL_PADDING * 2;
+
+  return Math.min(MAX_COLUMN_WIDTH, naturalWidth);
+}
+
 function calculateColumnWidths(
   maxCharCountsByColumn: number[],
   tableWidth: number
@@ -85,13 +94,8 @@ function calculateColumnWidths(
   }
 
   // First column: use natural width (minimum needed for content)
-  const firstColumnWidth = Math.min(
-    MAX_COLUMN_WIDTH,
-    Math.max(
-      MIN_COLUMN_WIDTH,
-      (maxCharCountsByColumn[0] ?? 0) * CHAR_WIDTH_ESTIMATE * WIDTH_BUFFER +
-        CELL_PADDING * 2
-    )
+  const firstColumnWidth = calculateSingleColumnWidth(
+    maxCharCountsByColumn[0] ?? 0
   );
 
   if (maxCharCountsByColumn.length === 1) {
@@ -101,13 +105,7 @@ function calculateColumnWidths(
   // Remaining columns: estimate natural widths
   const remainingCharCounts = maxCharCountsByColumn.slice(1);
   const remainingEstimatedWidths = remainingCharCounts.map((count) =>
-    Math.min(
-      MAX_COLUMN_WIDTH,
-      Math.max(
-        MIN_COLUMN_WIDTH,
-        count * CHAR_WIDTH_ESTIMATE * WIDTH_BUFFER + CELL_PADDING * 2
-      )
-    )
+    calculateSingleColumnWidth(count)
   );
 
   const remainingWidth = tableWidth - firstColumnWidth;
