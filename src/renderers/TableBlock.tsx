@@ -137,6 +137,7 @@ function TableCellBlock({
   width,
   height,
   onContentLayout,
+  isLastRow,
 }: {
   cell: TableCell;
   cellKey: string;
@@ -147,6 +148,7 @@ function TableCellBlock({
   width: number | undefined;
   height: number | undefined;
   onContentLayout: (event: LayoutChangeEvent) => void;
+  isLastRow: boolean;
 }) {
   const children = renderInlineChildren(cell, cellKey).filter(
     (child): child is ReactNode => child != null && child !== false
@@ -158,6 +160,7 @@ function TableCellBlock({
     <View
       style={[
         styles.tableCell,
+        !isLastRow && styles.tableCellWithBottomBorder,
         {
           borderColor: theme.tableBorderColor,
           alignItems: getAlignItems(textAlign),
@@ -212,6 +215,7 @@ function TableColumn({
         if (!cell) return null;
 
         const isHeader = rowIndex === 0;
+        const isLastRow = rowIndex === rows.length - 1;
         const cellKey = `col-${columnIndex}-row-${rowIndex}`;
         const height = rowHeights.get(rowIndex);
 
@@ -236,6 +240,7 @@ function TableColumn({
               onContentLayout={(e) =>
                 onCellLayout(rowIndex, e.nativeEvent.layout.height)
               }
+              isLastRow={isLastRow}
             />
           </View>
         );
@@ -395,8 +400,10 @@ const styles = StyleSheet.create({
   },
   tableCell: {
     borderRightWidth: 1,
-    borderBottomWidth: 1,
     overflow: 'hidden',
+  },
+  tableCellWithBottomBorder: {
+    borderBottomWidth: 1,
   },
   cellContentMeasure: {
     padding: CELL_PADDING,
