@@ -27,10 +27,14 @@ export interface TableBlockProps {
   renderInlineChildren: (parent: Parent, keyPrefix: string) => ReactNode[];
 }
 
+const FONT_SIZE = 14;
+const CHAR_WIDTH_ESTIMATE = FONT_SIZE * 0.7; // Assume em width is 70% of font size
 const MIN_COLUMN_WIDTH = 60;
-const CHAR_WIDTH_ESTIMATE = 5; // Approximate pixels per character
+
+const CELL_PADDING = 8; // 8px on each side
+const WIDTH_BUFFER = 1.1; // 10% buffer for font variations
 // Max column width based on Tailwind's prose width (~65ch)
-const MAX_COLUMN_WIDTH = 65 * CHAR_WIDTH_ESTIMATE; // 325px
+const MAX_COLUMN_WIDTH = 65 * CHAR_WIDTH_ESTIMATE; // 520px
 
 const getAlignItems = (
   textAlign: 'left' | 'center' | 'right'
@@ -85,7 +89,8 @@ function calculateColumnWidths(
     MAX_COLUMN_WIDTH,
     Math.max(
       MIN_COLUMN_WIDTH,
-      (maxCharCountsByColumn[0] ?? 0) * CHAR_WIDTH_ESTIMATE
+      (maxCharCountsByColumn[0] ?? 0) * CHAR_WIDTH_ESTIMATE * WIDTH_BUFFER +
+        CELL_PADDING * 2
     )
   );
 
@@ -98,7 +103,10 @@ function calculateColumnWidths(
   const remainingEstimatedWidths = remainingCharCounts.map((count) =>
     Math.min(
       MAX_COLUMN_WIDTH,
-      Math.max(MIN_COLUMN_WIDTH, count * CHAR_WIDTH_ESTIMATE)
+      Math.max(
+        MIN_COLUMN_WIDTH,
+        count * CHAR_WIDTH_ESTIMATE * WIDTH_BUFFER + CELL_PADDING * 2
+      )
     )
   );
 
@@ -393,11 +401,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   cellContentMeasure: {
-    padding: 8,
+    padding: CELL_PADDING,
   },
   tableCellText: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: FONT_SIZE,
+    lineHeight: FONT_SIZE * 1.5,
   },
   tableHeaderText: {
     fontSize: 14,
