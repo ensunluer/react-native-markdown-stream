@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 import {
   cloneElement,
   isValidElement,
@@ -27,10 +28,10 @@ export interface TableBlockProps {
   renderInlineChildren: (parent: Parent, keyPrefix: string) => ReactNode[];
 }
 
-const FONT_SIZE = 14;
+const FONT_SIZE = 16; // This is currently fixed
 const CHAR_WIDTH_ESTIMATE = FONT_SIZE * 0.7; // Assume em width is 70% of font size
 
-const CELL_PADDING = 8; // 8px on each side
+const CELL_HORIZONTAL_PADDING = 8; // 8px on each side
 const WIDTH_BUFFER = 1.1; // 10% buffer for font variations
 const MAX_COLUMN_WIDTH = 35 * CHAR_WIDTH_ESTIMATE;
 
@@ -101,7 +102,7 @@ function getMaxColumnCharCounts(rows: TableRow[]): number[] {
 function calculateSingleColumnWidth(longestCellCharCount: number): number {
   const naturalWidth =
     longestCellCharCount * CHAR_WIDTH_ESTIMATE * WIDTH_BUFFER +
-    CELL_PADDING * 2;
+    CELL_HORIZONTAL_PADDING * 2;
 
   return Math.min(MAX_COLUMN_WIDTH, naturalWidth);
 }
@@ -148,11 +149,12 @@ function calculateColumnWidths(
   return [firstColumnWidth, ...finalRemainingWidths];
 }
 
-function TableCellBlock({
+function TableCell({
   cell,
   cellKey,
   align,
   isHeader,
+  isFirstColumn,
   theme,
   renderInlineChildren,
   width,
@@ -164,6 +166,7 @@ function TableCellBlock({
   cellKey: string;
   align: 'left' | 'center' | 'right' | null | undefined;
   isHeader: boolean;
+  isFirstColumn: boolean;
   theme: MarkdownTheme;
   renderInlineChildren: (parent: Parent, keyPrefix: string) => ReactNode[];
   width: number | undefined;
@@ -179,23 +182,39 @@ function TableCellBlock({
 
   const textAlign = align ?? 'left';
 
+  const border = (() => {
+    if (isHeader) {
+      return { borderColor: theme.tableHeavyBorderColor, borderBottomWidth: 1 };
+    }
+    if (isLastRow) {
+      return { borderBottomWidth: 0 };
+    }
+    return { borderColor: theme.tableHeavyBorderColor, borderBottomWidth: 0.5 };
+  })();
+
   return (
     <View
       style={[
-        styles.tableCell,
-        !isLastRow && styles.tableCellWithBottomBorder,
+        styles.cell,
+        border,
         {
-          borderColor: theme.tableBorderColor,
           alignItems: getAlignItems(textAlign),
         },
+
         width !== undefined ? { width } : {},
         height !== undefined ? { height } : {},
       ]}
     >
-      <View onLayout={onContentLayout} style={styles.cellContentMeasure}>
+      <View
+        onLayout={onContentLayout}
+        style={[
+          styles.cellContentMeasure,
+          { paddingLeft: isFirstColumn ? 0 : CELL_HORIZONTAL_PADDING },
+        ]}
+      >
         <Text
           style={[
-            isHeader ? styles.tableHeaderText : styles.tableCellText,
+            isHeader ? styles.headerText : styles.cellText,
             isNumericCell ? styles.numericText : null,
             { color: theme.textColor },
           ]}
@@ -216,6 +235,7 @@ function TableCellBlock({
 function TableColumn({
   rows,
   columnIndex,
+  isLastColumn,
   alignment,
   theme,
   renderInlineChildren,
@@ -225,6 +245,7 @@ function TableColumn({
 }: {
   rows: TableRow[];
   columnIndex: number;
+  isLastColumn: boolean;
   alignment: 'left' | 'center' | 'right' | null;
   theme: MarkdownTheme;
   renderInlineChildren: (parent: Parent, keyPrefix: string) => ReactNode[];
@@ -232,31 +253,37 @@ function TableColumn({
   rowHeights: Map<number, number>;
   onCellLayout: (rowIndex: number, height: number) => void;
 }) {
+  const isFirstColumn = columnIndex === 0;
   return (
-    <View style={styles.column}>
+    <View
+      style={[
+        styles.column,
+        {
+          borderRightWidth: isLastColumn ? 0 : 0.5,
+          borderColor: isFirstColumn
+            ? theme.tableHeavyBorderColor
+            : theme.tableLightBorderColor,
+        },
+      ]}
+    >
       {rows.map((row, rowIndex) => {
         const cell = row.children[columnIndex];
         if (!cell) return null;
 
         const isHeader = rowIndex === 0;
+
         const isLastRow = rowIndex === rows.length - 1;
         const cellKey = `col-${columnIndex}-row-${rowIndex}`;
         const height = rowHeights.get(rowIndex);
 
         return (
-          <View
-            key={cellKey}
-            style={
-              isHeader
-                ? { backgroundColor: theme.codeBackgroundColor }
-                : undefined
-            }
-          >
-            <TableCellBlock
+          <View key={cellKey}>
+            <TableCell
               cell={cell}
               cellKey={cellKey}
               align={alignment}
               isHeader={isHeader}
+              isFirstColumn={isFirstColumn}
               theme={theme}
               renderInlineChildren={renderInlineChildren}
               width={columnWidth}
@@ -352,7 +379,7 @@ export function TableBlock({
       onLayout={handleTableLayout}
       style={[
         styles.tableContainer,
-        { borderColor: theme.tableBorderColor },
+        { borderColor: theme.tableHeavyBorderColor },
         containerStyle,
       ]}
     >
@@ -361,6 +388,7 @@ export function TableBlock({
         <TableColumn
           rows={rows}
           columnIndex={0}
+          isLastColumn={false}
           alignment={alignments[0] ?? null}
           theme={theme}
           renderInlineChildren={renderInlineChildren}
@@ -384,6 +412,7 @@ export function TableBlock({
                 key={`column-${columnIndex}`}
                 rows={rows}
                 columnIndex={columnIndex}
+                isLastColumn={columnIndex === columnCount - 1}
                 alignment={alignments[columnIndex] ?? null}
                 theme={theme}
                 renderInlineChildren={renderInlineChildren}
@@ -406,7 +435,7 @@ export function TableBlock({
 const styles = StyleSheet.create({
   tableContainer: {
     marginVertical: 12,
-    borderWidth: 1,
+    //borderWidth: 1,
     borderRadius: 6,
     overflow: 'hidden',
   },
@@ -422,27 +451,19 @@ const styles = StyleSheet.create({
   scrollableContent: {
     flexDirection: 'row',
   },
-  tableCell: {
-    borderRightWidth: 1,
+  cell: {
     overflow: 'hidden',
   },
-  tableCellWithBottomBorder: {
-    borderBottomWidth: 1,
-  },
   cellContentMeasure: {
-    padding: CELL_PADDING,
+    paddingHorizontal: CELL_HORIZONTAL_PADDING,
+    paddingVertical: 8,
   },
   numericText: {
     fontVariant: ['tabular-nums'] as const,
     letterSpacing: -0.35,
   },
-  tableCellText: {
-    fontSize: FONT_SIZE,
-    lineHeight: FONT_SIZE * 1.5,
-  },
-  tableHeaderText: {
-    fontSize: 14,
-    lineHeight: 20,
-    fontWeight: '700',
+  cellText: {},
+  headerText: {
+    fontWeight: '600',
   },
 });

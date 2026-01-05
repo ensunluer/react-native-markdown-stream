@@ -8,7 +8,8 @@ export interface MarkdownTheme {
   codeTextColor: string;
   quoteBorderColor: string;
   quoteBackgroundColor: string;
-  tableBorderColor: string;
+  tableHeavyBorderColor: string;
+  tableLightBorderColor: string;
 }
 
 export type ThemeMode = 'light' | 'dark';
@@ -37,7 +38,8 @@ export const lightTheme: MarkdownTheme = {
   codeTextColor: '#111827',
   quoteBorderColor: '#D1D5DB',
   quoteBackgroundColor: '#F9FAFB',
-  tableBorderColor: '#E5E7EB',
+  tableHeavyBorderColor: '#E5E7EB',
+  tableLightBorderColor: '#E5E7EB',
 };
 
 export const darkTheme: MarkdownTheme = {
@@ -50,7 +52,8 @@ export const darkTheme: MarkdownTheme = {
   codeTextColor: '#F9FAFB',
   quoteBorderColor: '#374151',
   quoteBackgroundColor: '#111827',
-  tableBorderColor: '#374151',
+  tableHeavyBorderColor: '#374151',
+  tableLightBorderColor: '#2a3443',
 };
 
 const THEME_KEYS: Array<keyof MarkdownTheme> = [
@@ -63,7 +66,8 @@ const THEME_KEYS: Array<keyof MarkdownTheme> = [
   'codeTextColor',
   'quoteBorderColor',
   'quoteBackgroundColor',
-  'tableBorderColor',
+  'tableHeavyBorderColor',
+  'tableLightBorderColor',
 ];
 
 function isMarkdownTheme(value: unknown): value is MarkdownTheme {
