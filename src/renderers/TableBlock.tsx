@@ -34,6 +34,27 @@ const CELL_PADDING = 8; // 8px on each side
 const WIDTH_BUFFER = 1.1; // 10% buffer for font variations
 const MAX_COLUMN_WIDTH = 35 * CHAR_WIDTH_ESTIMATE;
 
+function isNumericLikeText(rawText: string): boolean {
+  const text = rawText.trim();
+
+  if (text.length === 0) {
+    return false;
+  }
+
+  // Basic heuristic for numbers and monetary values:
+  // - Optional +/- sign
+  // - Optional leading currency symbol ($, €, £, ¥)
+  // - Digits with optional thousand separators and decimal part
+  // - Optional trailing percent sign
+  const numericWithGroupingPattern =
+    /^[-+]?[$€£¥]?\s*\d{1,3}(?:([,.\s])\d{3})*(?:[.,]\d+)?%?$/;
+  const simpleNumericPattern = /^[-+]?[$€£¥]?\s*\d+(?:[.,]\d+)?%?$/;
+
+  return (
+    numericWithGroupingPattern.test(text) || simpleNumericPattern.test(text)
+  );
+}
+
 const getAlignItems = (
   textAlign: 'left' | 'center' | 'right'
 ): 'flex-start' | 'center' | 'flex-end' => {
@@ -150,6 +171,8 @@ function TableCellBlock({
   onContentLayout: (event: LayoutChangeEvent) => void;
   isLastRow: boolean;
 }) {
+  const isNumericCell = isNumericLikeText(getTextContent(cell));
+
   const children = renderInlineChildren(cell, cellKey).filter(
     (child): child is ReactNode => child != null && child !== false
   );
@@ -173,6 +196,7 @@ function TableCellBlock({
         <Text
           style={[
             isHeader ? styles.tableHeaderText : styles.tableCellText,
+            isNumericCell ? styles.numericText : null,
             { color: theme.textColor },
           ]}
         >
@@ -407,6 +431,10 @@ const styles = StyleSheet.create({
   },
   cellContentMeasure: {
     padding: CELL_PADDING,
+  },
+  numericText: {
+    fontVariant: ['tabular-nums'] as const,
+    letterSpacing: -0.35,
   },
   tableCellText: {
     fontSize: FONT_SIZE,
