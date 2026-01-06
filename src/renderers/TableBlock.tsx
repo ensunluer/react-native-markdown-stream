@@ -300,6 +300,8 @@ function TableColumn({
   );
 }
 
+const EMPTY_ROW_HEIGHTS = new Map<number, number>();
+
 export function TableBlock({
   rows,
   alignments,
@@ -310,6 +312,9 @@ export function TableBlock({
   const [tableWidth, setTableWidth] = useState(0);
   const [rowHeights, setRowHeights] = useState<Map<number, number>>(new Map());
   const heightMeasurementsRef = useRef<Map<string, number>>(new Map());
+  const rowHeightsRef = useRef<Map<number, number>>(new Map());
+
+  rowHeightsRef.current = rowHeights;
 
   const columnCount = useMemo(
     () => Math.max(...rows.map((row) => row.children.length), 0),
@@ -337,11 +342,14 @@ export function TableBlock({
   const handleCellLayout = useCallback(
     (columnIndex: number, rowIndex: number, height: number) => {
       const key = `${columnIndex}-${rowIndex}`;
+
+      // Round to nearest 0.5 to prevent iOS floating point jitter
+      const normalizedHeight = Math.round(height * 2) / 2;
       const current = heightMeasurementsRef.current.get(key);
 
-      if (current === height) return;
+      if (current === normalizedHeight) return;
 
-      heightMeasurementsRef.current.set(key, height);
+      heightMeasurementsRef.current.set(key, normalizedHeight);
 
       // Calculate max height per row
       const newRowHeights = new Map<number, number>();
@@ -352,18 +360,31 @@ export function TableBlock({
         newRowHeights.set(rowIdx, Math.max(existing, h));
       });
 
-      // Check if anything changed
-      let hasChanges = false;
-      newRowHeights.forEach((h, rowIdx) => {
-        if (rowHeights.get(rowIdx) !== h) hasChanges = true;
-      });
+      // Check if anything changed - compare against ref, not state
+      const currentRowHeights = rowHeightsRef.current;
+      let hasChanges = newRowHeights.size !== currentRowHeights.size;
+      if (!hasChanges) {
+        newRowHeights.forEach((h, rowIdx) => {
+          if (currentRowHeights.get(rowIdx) !== h) hasChanges = true;
+        });
+      }
 
       if (hasChanges) {
         setRowHeights(newRowHeights);
       }
     },
-    [rowHeights]
+    []
   );
+
+  const cellLayoutHandlers = useMemo(() => {
+    const handlers: Array<(rowIndex: number, height: number) => void> = [];
+    for (let i = 0; i < columnCount; i++) {
+      handlers.push((rowIndex: number, height: number) => {
+        handleCellLayout(i, rowIndex, height);
+      });
+    }
+    return handlers;
+  }, [columnCount, handleCellLayout]);
 
   if (rows.length === 0) {
     return null;
@@ -373,6 +394,8 @@ export function TableBlock({
     { length: columnCount - 1 },
     (_, i) => i + 1
   );
+
+  const effectiveRowHeights = isHeightReady ? rowHeights : EMPTY_ROW_HEIGHTS;
 
   return (
     <View
@@ -393,10 +416,8 @@ export function TableBlock({
           theme={theme}
           renderInlineChildren={renderInlineChildren}
           columnWidth={isWidthReady ? columnWidths[0] : undefined}
-          rowHeights={isHeightReady ? rowHeights : new Map()}
-          onCellLayout={(rowIndex, height) =>
-            handleCellLayout(0, rowIndex, height)
-          }
+          rowHeights={effectiveRowHeights}
+          onCellLayout={cellLayoutHandlers[0] ?? handleCellLayout.bind(null, 0)}
         />
 
         {/* Scrollable columns */}
@@ -419,9 +440,10 @@ export function TableBlock({
                 columnWidth={
                   isWidthReady ? columnWidths[columnIndex] : undefined
                 }
-                rowHeights={isHeightReady ? rowHeights : new Map()}
-                onCellLayout={(rowIndex, height) =>
-                  handleCellLayout(columnIndex, rowIndex, height)
+                rowHeights={effectiveRowHeights}
+                onCellLayout={
+                  cellLayoutHandlers[columnIndex] ??
+                  handleCellLayout.bind(null, columnIndex)
                 }
               />
             ))}
