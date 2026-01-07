@@ -202,7 +202,9 @@ function TableCell({
         },
 
         width !== undefined ? { width } : {},
-        height !== undefined ? { height } : {},
+        // Use minHeight instead of height to prevent iOS from constraining
+        // the inner content view, which causes incorrect (smaller) measurements
+        height !== undefined ? { minHeight: height } : {},
       ]}
     >
       <View
@@ -300,8 +302,6 @@ function TableColumn({
   );
 }
 
-const EMPTY_ROW_HEIGHTS = new Map<number, number>();
-
 export function TableBlock({
   rows,
   alignments,
@@ -332,7 +332,6 @@ export function TableBlock({
   }, [maxCharCountByColumn, tableWidth]);
 
   const isWidthReady = tableWidth > 0 && columnWidths.length === columnCount;
-  const isHeightReady = rowHeights.size === rows.length;
 
   const handleTableLayout = useCallback((e: LayoutChangeEvent) => {
     const width = e.nativeEvent.layout.width;
@@ -395,8 +394,6 @@ export function TableBlock({
     (_, i) => i + 1
   );
 
-  const effectiveRowHeights = isHeightReady ? rowHeights : EMPTY_ROW_HEIGHTS;
-
   return (
     <View
       onLayout={handleTableLayout}
@@ -416,7 +413,7 @@ export function TableBlock({
           theme={theme}
           renderInlineChildren={renderInlineChildren}
           columnWidth={isWidthReady ? columnWidths[0] : undefined}
-          rowHeights={effectiveRowHeights}
+          rowHeights={rowHeights}
           onCellLayout={cellLayoutHandlers[0] ?? handleCellLayout.bind(null, 0)}
         />
 
@@ -440,7 +437,7 @@ export function TableBlock({
                 columnWidth={
                   isWidthReady ? columnWidths[columnIndex] : undefined
                 }
-                rowHeights={effectiveRowHeights}
+                rowHeights={rowHeights}
                 onCellLayout={
                   cellLayoutHandlers[columnIndex] ??
                   handleCellLayout.bind(null, columnIndex)
