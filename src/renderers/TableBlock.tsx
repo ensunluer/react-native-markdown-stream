@@ -195,15 +195,11 @@ function TableCell({
   return (
     <View
       style={[
-        styles.cell,
         border,
         {
           alignItems: getAlignItems(textAlign),
         },
-
         width !== undefined ? { width } : {},
-        // Use minHeight instead of height to prevent iOS from constraining
-        // the inner content view, which causes incorrect (smaller) measurements
         height !== undefined ? { minHeight: height } : {},
       ]}
     >
@@ -216,7 +212,7 @@ function TableCell({
       >
         <Text
           style={[
-            isHeader ? styles.headerText : styles.cellText,
+            isHeader ? styles.headerText : null,
             isNumericCell ? styles.numericText : null,
             { color: theme.textColor },
           ]}
@@ -259,7 +255,6 @@ function TableColumn({
   return (
     <View
       style={[
-        styles.column,
         {
           borderRightWidth: isLastColumn ? 0 : 0.5,
           borderColor: isFirstColumn
@@ -423,7 +418,6 @@ export function TableBlock({
             horizontal
             showsHorizontalScrollIndicator={false}
             style={styles.scrollableColumns}
-            contentContainerStyle={styles.scrollableContent}
           >
             {scrollableColumnIndices.map((columnIndex) => (
               <TableColumn
@@ -454,24 +448,13 @@ export function TableBlock({
 const styles = StyleSheet.create({
   tableContainer: {
     marginVertical: 12,
-    //borderWidth: 1,
     borderRadius: 6,
-    overflow: 'hidden',
   },
   tableBody: {
     flexDirection: 'row',
   },
-  column: {
-    flexDirection: 'column',
-  },
   scrollableColumns: {
     flex: 1,
-  },
-  scrollableContent: {
-    flexDirection: 'row',
-  },
-  cell: {
-    overflow: 'hidden',
   },
   cellContentMeasure: {
     paddingHorizontal: CELL_HORIZONTAL_PADDING,
@@ -481,7 +464,6 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'] as const,
     letterSpacing: -0.35,
   },
-  cellText: {},
   headerText: {
     fontWeight: '600',
   },
