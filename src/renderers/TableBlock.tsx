@@ -33,7 +33,7 @@ const CHAR_WIDTH_ESTIMATE = FONT_SIZE * 0.7; // Assume em width is 70% of font s
 
 const CELL_HORIZONTAL_PADDING = 8; // 8px on each side
 const WIDTH_BUFFER = 1.1; // 10% buffer for font variations
-const MAX_COLUMN_WIDTH = 35 * CHAR_WIDTH_ESTIMATE;
+const MAX_COLUMN_WIDTH = 25 * CHAR_WIDTH_ESTIMATE; // Keep the columns relatively narrow for mobile devices
 
 function isNumericLikeText(rawText: string): boolean {
   const text = rawText.trim();
