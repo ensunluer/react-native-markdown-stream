@@ -595,7 +595,9 @@ export function MarkdownRenderer({
       />
     );
 
-    return wrapBlock(table, key, element);
+    // Long press breaks scrolling and text selection
+    const allowLongPress = false;
+    return wrapBlock(table, key, element, allowLongPress);
   };
 
   const renderNode = (
