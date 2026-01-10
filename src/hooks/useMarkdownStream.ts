@@ -246,7 +246,11 @@ export function useMarkdownStream<T = string>({
   );
 
   const startRevealLoop = useCallback(() => {
-    if (revealTimerRef.current || pendingTokensRef.current.length === 0) {
+    if (revealTimerRef.current) {
+      return;
+    }
+
+    if (pendingTokensRef.current.length === 0) {
       return;
     }
 
