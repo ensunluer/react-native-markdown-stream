@@ -26,6 +26,7 @@ import type {
   ListItem,
   Paragraph,
   Root,
+  Table,
   Text as TextNode,
 } from 'mdast';
 import type { Parent } from 'unist';
@@ -33,6 +34,7 @@ import { CodeBlock, type CodeBlockProps } from './CodeBlock';
 import { MathBlock, type MathBlockProps } from './MathBlock';
 import { ImageBlock, type ImageBlockProps } from './ImageBlock';
 import { TextBlock } from './TextBlock';
+import { TableBlock, type TableBlockProps } from './TableBlock';
 import {
   resolveTheme,
   type MarkdownTheme,
@@ -46,6 +48,7 @@ export interface MarkdownRendererComponents {
   mathBlock?: (props: MathBlockProps) => ReactNode;
   mathInline?: (props: MathBlockProps) => ReactNode;
   image?: (props: ImageBlockProps & { node: MdastImage }) => ReactNode;
+  table?: (props: TableBlockProps & { node: Table }) => ReactNode;
 }
 
 export interface MarkdownRendererProps {
@@ -564,6 +567,39 @@ export function MarkdownRenderer({
     return wrapBlock(image, key, element, false);
   };
 
+  const renderTable = (table: Table, key: string) => {
+    const alignments = table.align ?? [];
+    const rows = table.children;
+    // Long press breaks scrolling and text selection
+    const allowLongPress = false;
+
+    if (components?.table) {
+      const element = (
+        <Fragment>
+          {components.table({
+            node: table,
+            rows,
+            alignments,
+            theme: resolvedTheme,
+            renderInlineChildren,
+          })}
+        </Fragment>
+      );
+      return wrapBlock(table, key, element, allowLongPress);
+    }
+
+    const element = (
+      <TableBlock
+        rows={rows}
+        alignments={alignments}
+        theme={resolvedTheme}
+        renderInlineChildren={renderInlineChildren}
+      />
+    );
+
+    return wrapBlock(table, key, element, allowLongPress);
+  };
+
   const renderNode = (
     node: Content,
     key: string,
@@ -616,18 +652,7 @@ export function MarkdownRenderer({
       case 'html':
         return null;
       case 'table':
-        return wrapBlock(
-          node,
-          key,
-          <TextBlock
-            style={[
-              styles.tableFallback,
-              { color: resolvedTheme.mutedTextColor },
-            ]}
-          >
-            {'[Table rendering is not supported in this version]'}
-          </TextBlock>
-        );
+        return renderTable(node as Table, key);
       default:
         if (INLINE_NODE_TYPES.has(node.type)) {
           return wrapBlock(
@@ -864,10 +889,6 @@ const styles = StyleSheet.create({
   thematicBreak: {
     height: 1,
     opacity: 0.3,
-    marginVertical: 12,
-  },
-  tableFallback: {
-    fontStyle: 'italic',
     marginVertical: 12,
   },
   blockPressable: {
