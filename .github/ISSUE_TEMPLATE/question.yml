@@ -1,0 +1,17 @@
+name: 💬 Question / Discussion
+description: Ask a question or discuss something about this library.
+labels: [question]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        # Question / Discussion
+
+        Ask questions or discuss anything related to this library.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question or topic
+      description: What would you like to ask or discuss?
+    validations:
+      required: true
