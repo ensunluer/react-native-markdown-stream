@@ -85,9 +85,19 @@ const STREAM_CHUNKS = [
     "  -H 'Accept: text/event-stream'\n" +
     '  -H "Authorization: Bearer $TOKEN"\n' +
     '```\n\n',
-  '| Syntax | Support | Note |\n' +
-    '| --- | --- | --- |\n' +
-    '| Table | ⚠️ | Currently displayed as plain text |\n\n',
+  '| Name | Price | Quantity | Description | Origin |\n',
+  '| --- | ---: | ---: | --- | ---  |\n',
+  '| Cherry | $0.25 | 30 | Small stone fruit with vibrant red color and sweet-tart taste. Excellent for desserts and preserves. Available in sweet and sour varieties, cherries are packed with antioxidants. These delicate fruits have a short growing season, typically harvested in late spring to early summer. Their glossy skin and juicy flesh make them a favorite for fresh eating, baking into pies, or processing into jams and preserves. Rich in vitamins C and A, cherries also contain melatonin which may aid sleep. | Originating from the region between the Black and Caspian Seas, cherries were brought to Rome by General Lucullus around 72 BC and subsequently spread throughout Europe and eventually to the Americas. |\n',
+  '| Apple | $1.00 | 10 | A crisp and juicy fruit. | Originally cultivated in Central Asia thousands of years ago, apples spread through Europe via ancient trade routes and arrived in North America with European colonists in the 17th century. |\n',
+  '| Banana | $0.50 | 20 | Elongated yellow fruit with soft, creamy flesh. Rich in potassium and easily digestible. | Native to Southeast Asia and the South Pacific, bananas have been cultivated for over 7,000 years. |\n',
+  '\n\n',
+  '| ID | Formatting | Left Aligned | Center Aligned | Right Aligned |\n',
+  '| :--- | --- | :--- | :---: | ---: |\n',
+  '| 1 | _Italic text_ | $100.00 | +10 | 100 |\n',
+  '| 2 | ^Super^script | $150.00 | -10 | 150 |\n',
+  '| 3 | **_Combined_** | $200.00 | +20 | 200 |\n',
+  '| 4 | Mix `inline` code | $111.00 | -3 | 111 |',
+  '\n\n',
   '_Streaming complete!_ ✅\n',
 ];
 
