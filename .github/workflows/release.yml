@@ -1,0 +1,130 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build and Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Extract version from tag
+        id: tag_version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Verify package.json version matches tag
+        run: |
+          PACKAGE_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${{ steps.tag_version.outputs.version }}"
+          if [ "$PACKAGE_VERSION" != "$TAG_VERSION" ]; then
+            echo "Error: package.json version ($PACKAGE_VERSION) does not match tag version ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "Version verification passed: $PACKAGE_VERSION"
+
+      - name: Build package
+        run: yarn prepare
+
+      - name: Run tests
+        run: yarn test --maxWorkers=2
+
+      - name: Check if NPM_TOKEN exists
+        id: check_npm_token
+        run: |
+          if [ -n "${{ secrets.NPM_TOKEN }}" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "NPM_TOKEN not found or expired. Skipping npm publish."
+          fi
+
+      - name: Setup Node.js for npm publish
+        if: steps.check_npm_token.outputs.exists == 'true'
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          registry-url: 'https://registry.npmjs.org'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npm
+        if: steps.check_npm_token.outputs.exists == 'true'
+        run: |
+          echo "📦 Publishing to npm..."
+          if npm publish --access public; then
+            echo "Successfully published to npm"
+          else
+            echo "Failed to publish to npm"
+            echo "This might be due to:"
+            echo "   1. Token expired (Granular tokens expire after 90 days)"
+            echo "   2. Token doesn't have publish permissions"
+            echo "   3. Package version already exists"
+            echo ""
+            echo "To fix:"
+            echo "   1. Check NPM Access Tokens: https://www.npmjs.com/settings/YOUR_USERNAME/tokens"
+            echo "   2. Create a new Granular Access Token (max 90 days)"
+            echo "   3. Update NPM_TOKEN secret in GitHub repository settings"
+            exit 1
+          fi
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get changelog from last tag or use default message
+          PREV_TAG=""
+          if git describe --tags --abbrev=0 HEAD~1 >/dev/null 2>&1; then
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD~1)
+            CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            CHANGELOG="- Initial release"
+          fi
+          
+          # Escape for multiline output
+          {
+            echo 'body<<EOF'
+            if [ -n "$PREV_TAG" ]; then
+              echo "## What's Changed"
+              echo ""
+              echo "$CHANGELOG"
+              echo ""
+              echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${{ github.ref_name }}"
+            else
+              echo "$CHANGELOG"
+            fi
+            echo EOF
+          } >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@c25b29b7f38e37ef661eb9d795843e678e78f3b3 # v2.3.0
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: Release ${{ steps.tag_version.outputs.version }}
+          body: ${{ steps.changelog.outputs.body }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
