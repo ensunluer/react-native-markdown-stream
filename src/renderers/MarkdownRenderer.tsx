@@ -570,6 +570,8 @@ export function MarkdownRenderer({
   const renderTable = (table: Table, key: string) => {
     const alignments = table.align ?? [];
     const rows = table.children;
+    // Long press breaks scrolling and text selection
+    const allowLongPress = false;
 
     if (components?.table) {
       const element = (
@@ -583,7 +585,7 @@ export function MarkdownRenderer({
           })}
         </Fragment>
       );
-      return wrapBlock(table, key, element);
+      return wrapBlock(table, key, element, allowLongPress);
     }
 
     const element = (
@@ -595,8 +597,6 @@ export function MarkdownRenderer({
       />
     );
 
-    // Long press breaks scrolling and text selection
-    const allowLongPress = false;
     return wrapBlock(table, key, element, allowLongPress);
   };
 
