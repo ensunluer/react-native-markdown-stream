@@ -29,11 +29,55 @@ export interface TableBlockProps {
 }
 
 const FONT_SIZE = 16; // This is currently fixed
-const CHAR_WIDTH_ESTIMATE = FONT_SIZE * 0.7; // Assume em width is 70% of font size
 
 const CELL_HORIZONTAL_PADDING = 8; // 8px on each side
-const WIDTH_BUFFER = 1.1; // 10% buffer for font variations
-const MAX_COLUMN_WIDTH = 25 * CHAR_WIDTH_ESTIMATE; // Keep the columns relatively narrow for mobile devices
+const WIDTH_BUFFER = 1.05; // 5% buffer for font variations
+const MAX_COLUMN_WIDTH = 280; // Keep the columns relatively narrow for mobile devices (~25 average chars)
+
+/**
+ * Estimate the rendered width of text based on character categories.
+ */
+function estimateTextWidth(text: string, fontSize: number): number {
+  let width = 0;
+  const chars = Array.from(text); // Handle multi-byte characters properly
+
+  for (const char of chars) {
+    // Extra wide characters (80-90% of font size)
+    if (/[mwMW@#%&]/.test(char)) {
+      width += fontSize * 0.85;
+    }
+    // Wide characters (65-75% of font size) - uppercase, digits, currency
+    else if (/[ABCDGHNOQRSUVXYZ0-9$€£¥]/.test(char)) {
+      width += fontSize * 0.7;
+    }
+    // Medium-wide characters (50-60% of font size) - most lowercase
+    else if (/[abdeghnopqsuvxyz?]/.test(char)) {
+      width += fontSize * 0.55;
+    }
+    // Medium characters (40-45% of font size)
+    else if (/[cEFJKLPT_krt]/.test(char)) {
+      width += fontSize * 0.42;
+    }
+    // Narrow characters (28-35% of font size)
+    else if (/[fIijl!\/\\|]/.test(char)) {
+      width += fontSize * 0.3;
+    }
+    // Very narrow - punctuation and spacing (20-28% of font size)
+    else if (/[.,;:\s'"`()-]/.test(char)) {
+      width += fontSize * 0.25;
+    }
+    // Emoji and other unicode (roughly 2x)
+    else if (char.codePointAt(0)! > 0x1f000) {
+      width += fontSize * 2.0;
+    }
+    // Default fallback for other characters
+    else {
+      width += fontSize * 0.6;
+    }
+  }
+
+  return width;
+}
 
 function isNumericLikeText(rawText: string): boolean {
   const text = rawText.trim();
@@ -80,54 +124,54 @@ function getTextContent(node: Node): string {
   return '';
 }
 
-// Get max character count for each column
-function getMaxColumnCharCounts(rows: TableRow[]): number[] {
-  const counts: number[] = [];
+// Get max estimated width for each column
+function getMaxColumnWidths(rows: TableRow[]): number[] {
+  const widths: number[] = [];
 
   for (const row of rows) {
     for (let colIdx = 0; colIdx < row.children.length; colIdx++) {
       const cell = row.children[colIdx];
       if (!cell) continue;
-      const charCount = getTextContent(cell).length;
-      counts[colIdx] = Math.max(counts[colIdx] ?? 0, charCount);
+      const text = getTextContent(cell);
+      const estimatedWidth = estimateTextWidth(text, FONT_SIZE);
+      widths[colIdx] = Math.max(widths[colIdx] ?? 0, estimatedWidth);
     }
   }
 
-  return counts;
+  return widths;
 }
 
 /**
- *  Calculate the width for a single column based on the character count.
+ *  Calculate the width for a single column based on the estimated text width.
  */
-function calculateSingleColumnWidth(longestCellCharCount: number): number {
+function calculateSingleColumnWidth(estimatedContentWidth: number): number {
   const naturalWidth =
-    longestCellCharCount * CHAR_WIDTH_ESTIMATE * WIDTH_BUFFER +
-    CELL_HORIZONTAL_PADDING * 2;
+    estimatedContentWidth * WIDTH_BUFFER + CELL_HORIZONTAL_PADDING * 2;
 
   return Math.min(MAX_COLUMN_WIDTH, naturalWidth);
 }
 
 function calculateColumnWidths(
-  maxCharCountsByColumn: number[],
+  maxWidthsByColumn: number[],
   tableWidth: number
 ): number[] {
-  if (maxCharCountsByColumn.length === 0 || tableWidth === 0) {
+  if (maxWidthsByColumn.length === 0 || tableWidth === 0) {
     return [];
   }
 
   // First column: use natural width (minimum needed for content)
   const firstColumnWidth = calculateSingleColumnWidth(
-    maxCharCountsByColumn[0] ?? 0
+    maxWidthsByColumn[0] ?? 0
   );
 
-  if (maxCharCountsByColumn.length === 1) {
+  if (maxWidthsByColumn.length === 1) {
     return [firstColumnWidth];
   }
 
   // Remaining columns: estimate natural widths
-  const remainingCharCounts = maxCharCountsByColumn.slice(1);
-  const remainingEstimatedWidths = remainingCharCounts.map((count) =>
-    calculateSingleColumnWidth(count)
+  const remainingWidths = maxWidthsByColumn.slice(1);
+  const remainingEstimatedWidths = remainingWidths.map((width) =>
+    calculateSingleColumnWidth(width)
   );
 
   const remainingWidth = tableWidth - firstColumnWidth;
@@ -316,15 +360,12 @@ export function TableBlock({
     [rows]
   );
 
-  const maxCharCountByColumn = useMemo(
-    () => getMaxColumnCharCounts(rows),
-    [rows]
-  );
+  const maxWidthsByColumn = useMemo(() => getMaxColumnWidths(rows), [rows]);
 
   const columnWidths = useMemo(() => {
     if (tableWidth === 0) return [];
-    return calculateColumnWidths(maxCharCountByColumn, tableWidth);
-  }, [maxCharCountByColumn, tableWidth]);
+    return calculateColumnWidths(maxWidthsByColumn, tableWidth);
+  }, [maxWidthsByColumn, tableWidth]);
 
   const isWidthReady = tableWidth > 0 && columnWidths.length === columnCount;
 
